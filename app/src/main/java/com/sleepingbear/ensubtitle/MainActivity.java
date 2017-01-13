@@ -143,16 +143,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     builder.setView(dialog_layout);
                     final AlertDialog alertDialog = builder.create();
 
-                    //드라마 목록
-                    Cursor cursor = db.rawQuery(DicQuery.getDramaList(), null);
-                    String[] from = new String[]{"CODE"};
-                    int[] to = new int[]{android.R.id.text1};
-                    SimpleCursorAdapter mAdapter = new SimpleCursorAdapter(getApplicationContext(), android.R.layout.simple_spinner_item, cursor, from, to);
-                    mAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    final Spinner s_group = (Spinner) dialog_layout.findViewById(R.id.my_s_drama);
-                    s_group.setAdapter(mAdapter);
-                    s_group.setSelection(0);
-
                     final EditText et_drama_name = ((EditText) dialog_layout.findViewById(R.id.my_et_drama_name));
 
                     ((Button) dialog_layout.findViewById(R.id.my_b_smi_find)).setOnClickListener(new View.OnClickListener() {
@@ -197,13 +187,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                             alertDialog.dismiss();
 
-                            String codeGroup = ((Cursor) s_group.getSelectedItem()).getString(1);
+                            String codeGroup = ((DramaFragment) adapter.getItem(selectedTab)).getGroupCode();
                             String insMaxCode = DicQuery.getMaxDramaCode(db, codeGroup);
-                            db.execSQL(DicQuery.getInsCode(codeGroup, insMaxCode, et_drama_name.getText().toString()));
+                            db.execSQL(DicQuery.getInsDramaCode(codeGroup, insMaxCode, et_drama_name.getText().toString(),
+                                    ((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).getText().toString(),
+                                    ((TextView) dialog_layout.findViewById(R.id.my_d_tv_mp3_file)).getText().toString()));
 
-                            //기록
-                            //DicUtils.writeInfoToFile(getApplicationContext(), db, "C01");
-
+                            //파일을 읽어서 자막 파일을 변환한다.
                             ((DramaFragment) adapter.getItem(selectedTab)).changeListView();
 
                             Toast.makeText(getApplicationContext(), "드라마를 추가하였습니다.", Toast.LENGTH_SHORT).show();

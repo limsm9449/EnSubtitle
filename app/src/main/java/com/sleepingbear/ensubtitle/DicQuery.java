@@ -658,8 +658,8 @@ public class DicQuery {
     public static String getDramaList() {
         StringBuffer sql = new StringBuffer();
 
-        sql.append("SELECT SEQ _id, CODE, CODE_NAME" + CommConstants.sqlCR);
-        sql.append("  FROM DIC_CODE" + CommConstants.sqlCR);
+        sql.append("SELECT SEQ _id, CODE, CODE_NAME, (SELECT COUNT(*) FROM DIC_CODE WHERE CODE_GROUP = A.CODE) SUB_CNT" + CommConstants.sqlCR);
+        sql.append("  FROM DIC_CODE A" + CommConstants.sqlCR);
         sql.append(" WHERE CODE_GROUP = 'DRAMA'" + CommConstants.sqlCR);
         sql.append(" ORDER BY CODE_NAME" + CommConstants.sqlCR);
         DicUtils.dicSqlLog(sql.toString());
@@ -696,5 +696,27 @@ public class DicQuery {
         }
 
         return maxDramaCode;
+    }
+
+    public static String getInsDramaCode(String groupCode, String code, String codeName, String smiFile, String mp3File) {
+        StringBuffer sql = new StringBuffer();
+
+        sql.append("INSERT INTO DIC_CODE(CODE_GROUP, CODE, CODE_NAME, SMI_FILE, MP3_FILE)" + CommConstants.sqlCR);
+        sql.append("VALUES('" + groupCode + "', '" + code + "', '" + codeName + "', '" + smiFile + "', '" + mp3File + "')" + CommConstants.sqlCR);
+
+        DicUtils.dicSqlLog(sql.toString());
+
+        return sql.toString();
+    }
+
+    public static String getDelSubtitle(String code) {
+        StringBuffer sql = new StringBuffer();
+
+        sql.append("DELETE FROM DIC_SUBTITLE" + CommConstants.sqlCR);
+        sql.append(" WHERE KIND = '" + code + "'" + CommConstants.sqlCR);
+
+        DicUtils.dicSqlLog(sql.toString());
+
+        return sql.toString();
     }
 }

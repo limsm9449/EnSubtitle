@@ -43,4 +43,5 @@ public class CommConstants {
     public static String tag_voc_ins = "C_VOC_INS" ;
 
     public static String voc_default_code = "VOC0001" ;
+    public static String drama_default_code = "D001" ;
 }

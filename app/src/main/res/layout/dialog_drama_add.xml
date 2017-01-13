@@ -26,38 +26,6 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:layout_marginBottom="5dp">
-
-        <Spinner
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/my_s_drama"
-            android:layout_toLeftOf="@+id/my_b_group_add" />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="30dp"
-            android:text="추가"
-            android:id="@+id/my_b_group_add"
-            android:layout_gravity="center_horizontal"
-            android:layout_alignParentRight="true"
-            android:background="@drawable/my_button"
-            android:layout_marginRight="10dp"
-            android:layout_marginLeft="10dp" />
-    </RelativeLayout>
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/my_divider"
-        android:layout_alignParentTop="true"
-        android:id="@+id/linearLayout6" />
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:layout_marginTop="10dp">
 
         <EditText
