@@ -95,7 +95,13 @@ public class FileChooser {
                         } else if (extension == null) {
                             return true;
                         } else {
-                            return file.getName().toLowerCase().endsWith(extension);
+                            String fileExt = file.getName().toLowerCase().substring(file.getName().length() - 3);
+                            if ( extension.indexOf(fileExt) > -1 ) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                            //return file.getName().toLowerCase().endsWith(extension);
                         }
                     } else {
                         return false;

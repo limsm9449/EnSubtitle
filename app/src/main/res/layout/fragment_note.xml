@@ -14,7 +14,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
-            android:id="@+id/my_f_conversation_note_rl">
+            android:id="@+id/my_f_drama_rl">
 
             <Spinner
                 android:layout_width="match_parent"
@@ -36,8 +36,8 @@
             android:layout_height="0.5dp"
             android:background="@color/my_divider"
             android:layout_marginTop="5dp"
-            android:id="@+id/my_f_conversation_note_ll"
-            android:layout_below="@+id/my_f_conversation_note_rl"></LinearLayout>
+            android:id="@+id/my_f_drama_ll"
+            android:layout_below="@+id/my_f_drama_rl"></LinearLayout>
 
         <ListView
             android:layout_width="match_parent"
@@ -45,7 +45,7 @@
             android:id="@+id/my_f_conversation_note_lv"
             android:divider="@color/my_divider"
             android:dividerHeight="0.5dp"
-            android:layout_below="@+id/my_f_conversation_note_ll"
+            android:layout_below="@+id/my_f_drama_ll"
             android:layout_above="@+id/adView" />
 
         <com.google.android.gms.ads.AdView

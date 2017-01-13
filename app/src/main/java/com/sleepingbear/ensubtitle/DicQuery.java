@@ -654,4 +654,47 @@ public class DicQuery {
         return sql.toString();
     }
 
+
+    public static String getDramaList() {
+        StringBuffer sql = new StringBuffer();
+
+        sql.append("SELECT SEQ _id, CODE, CODE_NAME" + CommConstants.sqlCR);
+        sql.append("  FROM DIC_CODE" + CommConstants.sqlCR);
+        sql.append(" WHERE CODE_GROUP = 'DRAMA'" + CommConstants.sqlCR);
+        sql.append(" ORDER BY CODE_NAME" + CommConstants.sqlCR);
+        DicUtils.dicSqlLog(sql.toString());
+
+        return sql.toString();
+    }
+
+    public static String getDramaSubList(String drama) {
+        StringBuffer sql = new StringBuffer();
+
+        sql.append("SELECT SEQ _id, SEQ, CODE, CODE_NAME, SMI_FILE, MP3_FILE" + CommConstants.sqlCR);
+        sql.append("  FROM DIC_CODE" + CommConstants.sqlCR);
+        sql.append(" WHERE CODE_GROUP = '" + drama + "'" + CommConstants.sqlCR);
+        sql.append(" ORDER BY CODE_NAME" + CommConstants.sqlCR);
+        DicUtils.dicSqlLog(sql.toString());
+
+        return sql.toString();
+    }
+
+    public static String getMaxDramaCode(SQLiteDatabase mDb, String codeGroup) {
+        StringBuffer sql = new StringBuffer();
+
+        sql.append("SELECT MAX(CODE) CODE" + CommConstants.sqlCR);
+        sql.append("  FROM DIC_CODE" + CommConstants.sqlCR);
+        sql.append(" WHERE CODE_GROUP = '" + codeGroup + "'" + CommConstants.sqlCR);
+
+        String maxDramaCode = "";
+        Cursor maxCategoryCursor = mDb.rawQuery(sql.toString(), null);
+        if ( maxCategoryCursor.moveToNext() ) {
+            String max = maxCategoryCursor.getString(maxCategoryCursor.getColumnIndexOrThrow("CODE"));
+            int maxCode = Integer.parseInt(max.substring(4,max.length()));
+            maxDramaCode = codeGroup + DicUtils.lpadding(Integer.toString(maxCode + 1), 4, "0");
+            DicUtils.dicSqlLog("maxDramaCode : " + maxDramaCode);
+        }
+
+        return maxDramaCode;
+    }
 }

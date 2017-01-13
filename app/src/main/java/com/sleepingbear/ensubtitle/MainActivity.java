@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
@@ -23,6 +24,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -33,6 +35,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -131,34 +134,79 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     alertDialog.setCanceledOnTouchOutside(false);
                     alertDialog.show();
-                } else if ( selectedTab == CommConstants.f_Note ) {
+                } else if ( selectedTab == CommConstants.f_Drama ) {
                     LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-                    final View dialog_layout = inflater.inflate(R.layout.dialog_note_add, null);
+                    final View dialog_layout = inflater.inflate(R.layout.dialog_drama_add, null);
 
                     //dialog 생성..
                     AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
                     builder.setView(dialog_layout);
                     final AlertDialog alertDialog = builder.create();
 
-                    final EditText et_ins = ((EditText) dialog_layout.findViewById(R.id.my_et_ins_name));
+                    //드라마 목록
+                    Cursor cursor = db.rawQuery(DicQuery.getDramaList(), null);
+                    String[] from = new String[]{"CODE"};
+                    int[] to = new int[]{android.R.id.text1};
+                    SimpleCursorAdapter mAdapter = new SimpleCursorAdapter(getApplicationContext(), android.R.layout.simple_spinner_item, cursor, from, to);
+                    mAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    final Spinner s_group = (Spinner) dialog_layout.findViewById(R.id.my_s_drama);
+                    s_group.setAdapter(mAdapter);
+                    s_group.setSelection(0);
+
+                    final EditText et_drama_name = ((EditText) dialog_layout.findViewById(R.id.my_et_drama_name));
+
+                    ((Button) dialog_layout.findViewById(R.id.my_b_smi_find)).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            FileChooser filechooser = new FileChooser(MainActivity.this);
+                            filechooser.setFileListener(new FileChooser.FileSelectedListener() {
+                                @Override
+                                public void fileSelected(final File file) {
+                                    ((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).setText(file.getAbsolutePath());
+                                }
+                            });
+                            filechooser.setExtension("smi,srt");
+                            filechooser.showDialog();
+                        }
+                    });
+                    ((Button) dialog_layout.findViewById(R.id.my_b_mp3_find)).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            FileChooser filechooser = new FileChooser(MainActivity.this);
+                            filechooser.setFileListener(new FileChooser.FileSelectedListener() {
+                                @Override
+                                public void fileSelected(final File file) {
+                                    ((TextView) dialog_layout.findViewById(R.id.my_d_tv_mp3_file)).setText(file.getAbsolutePath());
+                                }
+                            });
+                            filechooser.setExtension("mp3");
+                            filechooser.showDialog();
+                        }
+                    });
                     ((Button) dialog_layout.findViewById(R.id.my_b_ins)).setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            if ("".equals(et_ins.getText().toString())) {
-                                Toast.makeText(getApplicationContext(), "회화 노트 이름을 입력하세요.", Toast.LENGTH_SHORT).show();
-                            } else {
-                                alertDialog.dismiss();
-
-                                String insMaxCode = DicQuery.getMaxNoteCode(db);
-                                db.execSQL(DicQuery.getInsCode("C01", insMaxCode, et_ins.getText().toString()));
-
-                                //기록
-                                //DicUtils.writeInfoToFile(getApplicationContext(), db, "C01");
-
-                                ((NoteFragment) adapter.getItem(selectedTab)).changeListView();
-
-                                Toast.makeText(getApplicationContext(), "회회 노트를 추가하였습니다.", Toast.LENGTH_SHORT).show();
+                            if ("".equals(et_drama_name.getText().toString())) {
+                                Toast.makeText(getApplicationContext(), "드라마 제목을 입력하세요.", Toast.LENGTH_SHORT).show();
+                                return;
                             }
+                            if ("".equals(((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).getText().toString())) {
+                                Toast.makeText(getApplicationContext(), "자막 파일을 선택하세요.", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+
+                            alertDialog.dismiss();
+
+                            String codeGroup = ((Cursor) s_group.getSelectedItem()).getString(1);
+                            String insMaxCode = DicQuery.getMaxDramaCode(db, codeGroup);
+                            db.execSQL(DicQuery.getInsCode(codeGroup, insMaxCode, et_drama_name.getText().toString()));
+
+                            //기록
+                            //DicUtils.writeInfoToFile(getApplicationContext(), db, "C01");
+
+                            ((DramaFragment) adapter.getItem(selectedTab)).changeListView();
+
+                            Toast.makeText(getApplicationContext(), "드라마를 추가하였습니다.", Toast.LENGTH_SHORT).show();
                         }
                     });
                     ((Button) dialog_layout.findViewById(R.id.my_b_close)).setOnClickListener(new View.OnClickListener() {
@@ -205,6 +253,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
         //mPager.setCurrentItem(0);
         //setChangeViewPaper(selectedTab, CommConstants.changeKind_title);
+
+        //처음 Tab 선택
+        setChangeViewPaper(0);
 
         // 상단의 Tab 을 정의한다.
         tabLayout = (TabLayout) findViewById(R.id.tabs);
@@ -296,16 +347,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         try {
             fab.setVisibility(View.GONE);
 
+            //가끔 알수없는 오류로 방어코딩
             if ( adapter.getItem(position) == null ) {
                 return;
             }
 
-            if (position == CommConstants.f_Vocabulary) {
+            if (position == CommConstants.f_Drama || position == CommConstants.f_Vocabulary) {
                 fab.setVisibility(View.VISIBLE);
-            } else if (position == CommConstants.f_Note) {
-                if ( "C01".equals(((NoteFragment) adapter.getItem(position)).groupCode) ) {
-                    fab.setVisibility(View.VISIBLE);
-                }
             }
         } catch ( Exception e ) {
             e.printStackTrace();
@@ -600,17 +648,20 @@ class MainPagerAdapter extends FragmentPagerAdapter {
     public MainPagerAdapter(FragmentManager fm, AppCompatActivity activity) {
         super(fm);
 
-        mFragmentList.add(new ConversationStudyFragment());
-        mFragmentTitleList.add("회화 학습");
+        mFragmentList.add(new DramaFragment());
+        mFragmentTitleList.add("미드 목록");
 
-        mFragmentList.add(new PatternFragment());
-        mFragmentTitleList.add("회화 패턴");
+        //mFragmentList.add(new ConversationStudyFragment());
+        //mFragmentTitleList.add("회화 학습");
 
-        mFragmentList.add(new ConversationFragment());
-        mFragmentTitleList.add("회화 검색");
+        //mFragmentList.add(new PatternFragment());
+        //mFragmentTitleList.add("회화 패턴");
 
-        mFragmentList.add(new NoteFragment());
-        mFragmentTitleList.add("회화 노트");
+        //mFragmentList.add(new ConversationFragment());
+        //mFragmentTitleList.add("회화 검색");
+
+        //mFragmentList.add(new NoteFragment());
+        //mFragmentTitleList.add("회화 노트");
 
         mFragmentList.add(new VocabularyFragment());
         mFragmentTitleList.add("단어장");
@@ -633,10 +684,3 @@ class MainPagerAdapter extends FragmentPagerAdapter {
     }
 }
 
-
-/*
-//소프트 키보드 없애기
-   InputMethodManager imm= (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-   imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
-
- */

@@ -25,7 +25,7 @@
         android:layout_height="0.5dp"
         android:background="@color/my_divider"
         android:layout_below="@+id/my_tv_pattern_desc"
-        android:id="@+id/my_h_split_line"></LinearLayout>
+        android:id="@+id/my_c_ll_split"></LinearLayout>
 
     <ListView
         android:layout_width="match_parent"
@@ -35,7 +35,7 @@
         android:divider="@color/my_divider"
         android:dividerHeight="0.5dp"
         android:layout_above="@+id/adView"
-        android:layout_below="@+id/my_h_split_line" />
+        android:layout_below="@+id/my_c_ll_split" />
 
 
     <com.google.android.gms.ads.AdView
