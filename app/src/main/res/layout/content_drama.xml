@@ -17,11 +17,13 @@
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:layout_marginTop="5dp"
+            android:layout_marginLeft="5dp">
             <RadioGroup
                 android:layout_width="match_parent"
                 android:layout_height="30dp"
-                android:checkedButton="@+id/my_rb_all"
+                android:checkedButton="@+id/my_rb_foreign"
                 android:id="@+id/my_rg_lang"
                 android:orientation="horizontal"
                 android:background="@drawable/my_toggle_outline"
@@ -40,7 +42,7 @@
                     android:button="@null"
                     android:gravity="center"
                     android:textColor="@color/my_white"
-                    android:checked="true"
+                    android:checked="false"
                     android:layout_marginRight="1dp" />
 
                 <RadioButton
@@ -77,7 +79,7 @@
                 android:layout_height="wrap_content"
                 android:text="Time"
                 android:id="@+id/my_c_cb_time"
-                android:checked="true"
+                android:checked="false"
                 android:layout_alignParentRight="true"
                 android:layout_marginLeft="20dp"
                 android:layout_marginRight="20dp" />
@@ -90,7 +92,8 @@
         android:layout_height="0.5dp"
         android:background="@color/my_divider"
         android:layout_below="@+id/my_c_ll"
-        android:id="@+id/my_c_ll_split"></LinearLayout>
+        android:id="@+id/my_c_ll_split"
+        android:layout_marginTop="5dp"></LinearLayout>
 
     <ListView
         android:layout_width="match_parent"
@@ -100,6 +103,8 @@
         android:divider="@color/my_divider"
         android:dividerHeight="0.5dp"
         android:layout_below="@+id/my_c_ll_split"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
         android:layout_above="@+id/my_c_ll_split2" />
 
     <LinearLayout
@@ -118,19 +123,29 @@
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp">
 
-        <SeekBar
-            android:layout_width="wrap_content"
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/my_c_seekBar"
-            android:layout_toLeftOf="@+id/my_c_tv_time"
-            android:layout_alignParentStart="true" />
+            android:id="@+id/my_c_rl_seekBar_hidden">
 
-        <TextView
-            android:text="time"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/my_c_tv_time"
-            android:layout_alignParentRight="true" />
+            <SeekBar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/my_c_seekBar"
+                android:layout_toLeftOf="@+id/my_c_tv_time"
+                android:layout_alignParentStart="true"
+                android:paddingEnd="5dp"
+                android:paddingStart="5dp" />
+
+            <TextView
+                android:text="time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/my_c_tv_time"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="5dp" />
+        </RelativeLayout>
+
     </RelativeLayout>
 
     <RelativeLayout
@@ -142,7 +157,8 @@
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:id="@+id/my_c_ll_mp3_hidden">
 
             <ImageView
                 android:layout_width="wrap_content"
@@ -161,8 +177,29 @@
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                app:srcCompat="@mipmap/ic_stop_black_24dp"
+                android:id="@+id/my_iv_stop"
+                android:layout_weight="1" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 app:srcCompat="@mipmap/ic_repeat_black_24dp"
                 android:id="@+id/my_iv_repeat"
+                android:layout_weight="1" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@mipmap/ic_sync_black_24dp"
+                android:id="@+id/my_iv_sync"
+                android:layout_weight="1" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@mipmap/ic_sync_disabled_black_24dp"
+                android:id="@+id/my_iv_sync_not"
                 android:layout_weight="1" />
 
             <ImageView
@@ -184,4 +221,5 @@
         ads:adSize="BANNER"
         ads:adUnitId="@string/banner_ad_unit_id"
         android:layout_alignParentBottom="true" />
+
 </RelativeLayout>

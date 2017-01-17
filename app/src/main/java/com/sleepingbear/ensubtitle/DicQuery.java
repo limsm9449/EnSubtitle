@@ -690,7 +690,7 @@ public class DicQuery {
         Cursor maxCategoryCursor = mDb.rawQuery(sql.toString(), null);
         if ( maxCategoryCursor.moveToNext() ) {
             String max = maxCategoryCursor.getString(maxCategoryCursor.getColumnIndexOrThrow("CODE"));
-            int maxCode = Integer.parseInt(max.substring(4,max.length()));
+            int maxCode = ( max == null ? 0 : Integer.parseInt(max.substring(4,max.length())));
             maxDramaCode = codeGroup + DicUtils.lpadding(Integer.toString(maxCode + 1), 4, "0");
             DicUtils.dicSqlLog("maxDramaCode : " + maxDramaCode);
         }
@@ -709,12 +709,50 @@ public class DicQuery {
         return sql.toString();
     }
 
+    public static String getInsSubtitle(String code, String time, String han, String foreign) {
+        StringBuffer sql = new StringBuffer();
+
+        sql.append("INSERT INTO DIC_SUBTITLE ( CODE, TIME, LANG_HAN, LANG_FOREIGN, TEMP )" + CommConstants.sqlCR);
+        sql.append("VALUES ( '" + code + "', '" + time + "', '" + han + "', '" + foreign + "', '' )" + CommConstants.sqlCR);
+
+        //DicUtils.dicSqlLog(sql.toString());
+
+        return sql.toString();
+    }
+
     public static String getDelSubtitle(String code) {
         StringBuffer sql = new StringBuffer();
 
         sql.append("DELETE FROM DIC_SUBTITLE" + CommConstants.sqlCR);
-        sql.append(" WHERE KIND = '" + code + "'" + CommConstants.sqlCR);
+        sql.append(" WHERE CODE = '" + code + "'" + CommConstants.sqlCR);
 
+        DicUtils.dicSqlLog(sql.toString());
+
+        return sql.toString();
+    }
+
+    public static String getUpdDramaCode(String groupCode, String code, String codeName, String smiFile, String mp3File) {
+        StringBuffer sql = new StringBuffer();
+
+        sql.append("UPDATE DIC_CODE" + CommConstants.sqlCR);
+        sql.append("   SET CODE_NAME = '" + codeName + "'" + CommConstants.sqlCR);
+        sql.append("       ,SMI_FILE = '" + smiFile + "'" + CommConstants.sqlCR);
+        sql.append("       ,MP3_FILE = '" + mp3File + "'" + CommConstants.sqlCR);
+        sql.append(" WHERE CODE_GROUP = '" + groupCode + "'" + CommConstants.sqlCR);
+        sql.append("   AND CODE = '" + code + "'" + CommConstants.sqlCR);
+
+        DicUtils.dicSqlLog(sql.toString());
+
+        return sql.toString();
+    }
+
+    public static String getSubtitleList(String code) {
+        StringBuffer sql = new StringBuffer();
+
+        sql.append("SELECT  SEQ _id, SEQ, TIME, LANG_HAN, LANG_FOREIGN" + CommConstants.sqlCR);
+        sql.append("FROM    DIC_SUBTITLE" + CommConstants.sqlCR);
+        sql.append("WHERE   CODE = '" + code + "'" + CommConstants.sqlCR);
+        sql.append("ORDER   BY TIME" + CommConstants.sqlCR);
         DicUtils.dicSqlLog(sql.toString());
 
         return sql.toString();

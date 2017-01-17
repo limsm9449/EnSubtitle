@@ -145,6 +145,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     final EditText et_drama_name = ((EditText) dialog_layout.findViewById(R.id.my_et_drama_name));
 
+                    ((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).setText(CommConstants.smi_msg);
+                    ((TextView) dialog_layout.findViewById(R.id.my_d_tv_mp3_file)).setText(CommConstants.mp3_msg);
+
                     ((Button) dialog_layout.findViewById(R.id.my_b_smi_find)).setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
@@ -187,13 +190,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                             alertDialog.dismiss();
 
+                            String smi_file = ((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).getText().toString();
+                            if ( smi_file.equals(CommConstants.smi_msg) ) {
+                                smi_file = "";
+                            }
+                            String mp3_file = ((TextView) dialog_layout.findViewById(R.id.my_d_tv_mp3_file)).getText().toString();
+                            if ( mp3_file.equals(CommConstants.mp3_msg) ) {
+                                mp3_file = "";
+                            }
+
                             String codeGroup = ((DramaFragment) adapter.getItem(selectedTab)).getGroupCode();
                             String insMaxCode = DicQuery.getMaxDramaCode(db, codeGroup);
-                            db.execSQL(DicQuery.getInsDramaCode(codeGroup, insMaxCode, et_drama_name.getText().toString(),
-                                    ((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).getText().toString(),
-                                    ((TextView) dialog_layout.findViewById(R.id.my_d_tv_mp3_file)).getText().toString()));
+                            db.execSQL(DicQuery.getInsDramaCode(codeGroup, insMaxCode, et_drama_name.getText().toString(), smi_file, mp3_file ) );
 
                             //파일을 읽어서 자막 파일을 변환한다.
+                            SubtitleUtils.subtitleExtract( db, insMaxCode, ((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).getText().toString() , true );
+
                             ((DramaFragment) adapter.getItem(selectedTab)).changeListView();
 
                             Toast.makeText(getApplicationContext(), "드라마를 추가하였습니다.", Toast.LENGTH_SHORT).show();

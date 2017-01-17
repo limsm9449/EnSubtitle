@@ -44,4 +44,7 @@ public class CommConstants {
 
     public static String voc_default_code = "VOC0001" ;
     public static String drama_default_code = "D001" ;
+
+    public static String smi_msg = "자막 파일을 선택하세요.";
+    public static String mp3_msg = "mp3 파일을 선택하세요.";
 }
