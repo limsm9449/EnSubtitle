@@ -655,7 +655,7 @@ public class DicQuery {
     }
 
 
-    public static String getDramaList() {
+    public static String getDramaGroupList() {
         StringBuffer sql = new StringBuffer();
 
         sql.append("SELECT SEQ _id, CODE, CODE_NAME, (SELECT COUNT(*) FROM DIC_CODE WHERE CODE_GROUP = A.CODE) SUB_CNT" + CommConstants.sqlCR);
@@ -667,12 +667,30 @@ public class DicQuery {
         return sql.toString();
     }
 
+    public static String getDramaGroupAllList() {
+        StringBuffer sql = new StringBuffer();
+
+        sql.append("SELECT 0 _id, '' CODE, '전체' CODE_NAME, (SELECT COUNT(*) FROM DIC_CODE WHERE CODE_GROUP IN ( SELECT CODE FROM DIC_CODE WHERE CODE_GROUP = 'DRAMA' ) ) SUB_CNT, 1 ORD" + CommConstants.sqlCR);
+        sql.append("UNION " + CommConstants.sqlCR);
+        sql.append("SELECT SEQ _id, CODE, CODE_NAME, (SELECT COUNT(*) FROM DIC_CODE WHERE CODE_GROUP = A.CODE) SUB_CNT, 2 ORD" + CommConstants.sqlCR);
+        sql.append("  FROM DIC_CODE A" + CommConstants.sqlCR);
+        sql.append(" WHERE CODE_GROUP = 'DRAMA'" + CommConstants.sqlCR);
+        sql.append(" ORDER BY ORD, CODE_NAME" + CommConstants.sqlCR);
+        DicUtils.dicSqlLog(sql.toString());
+
+        return sql.toString();
+    }
+
     public static String getDramaSubList(String drama) {
         StringBuffer sql = new StringBuffer();
 
         sql.append("SELECT SEQ _id, SEQ, CODE, CODE_NAME, SMI_FILE, MP3_FILE" + CommConstants.sqlCR);
         sql.append("  FROM DIC_CODE" + CommConstants.sqlCR);
-        sql.append(" WHERE CODE_GROUP = '" + drama + "'" + CommConstants.sqlCR);
+        if ( "".equals(drama) ) {
+            sql.append(" WHERE CODE_GROUP IN ( SELECT CODE FROM DIC_CODE WHERE CODE_GROUP = 'DRAMA' ) " + CommConstants.sqlCR);
+        } else {
+            sql.append(" WHERE CODE_GROUP = '" + drama + "'" + CommConstants.sqlCR);
+        }
         sql.append(" ORDER BY CODE_NAME" + CommConstants.sqlCR);
         DicUtils.dicSqlLog(sql.toString());
 
@@ -756,5 +774,24 @@ public class DicQuery {
         DicUtils.dicSqlLog(sql.toString());
 
         return sql.toString();
+    }
+
+    public static String getMaxDramaGroupCode(SQLiteDatabase mDb) {
+        StringBuffer sql = new StringBuffer();
+
+        sql.append("SELECT MAX(CODE) CODE" + CommConstants.sqlCR);
+        sql.append("  FROM DIC_CODE" + CommConstants.sqlCR);
+        sql.append(" WHERE CODE_GROUP = 'DRAMA'" + CommConstants.sqlCR);
+
+        String maxDramaCode = "";
+        Cursor maxCategoryCursor = mDb.rawQuery(sql.toString(), null);
+        if ( maxCategoryCursor.moveToNext() ) {
+            String max = maxCategoryCursor.getString(maxCategoryCursor.getColumnIndexOrThrow("CODE"));
+            int maxCode = ( max == null ? 0 : Integer.parseInt(max.substring(1,max.length())));
+            maxDramaCode = "D" + DicUtils.lpadding(Integer.toString(maxCode + 1), 3, "0");
+            DicUtils.dicSqlLog("getMaxDramaGroupCode : " + maxDramaCode);
+        }
+
+        return maxDramaCode;
     }
 }

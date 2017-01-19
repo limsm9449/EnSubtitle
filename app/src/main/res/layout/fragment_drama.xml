@@ -24,7 +24,18 @@
                 android:layout_height="20dp"
                 android:layout_marginBottom="5dp"
                 android:layout_marginTop="5dp"
-                android:layout_marginRight="10dp" />
+                android:layout_marginRight="10dp"
+                android:layout_toLeftOf="@+id/my_iv_group_setting" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@mipmap/ic_settings_black_24dp"
+                android:id="@+id/my_iv_group_setting"
+                android:layout_alignParentRight="true"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:layout_centerVertical="true" />
 
         </RelativeLayout>
 

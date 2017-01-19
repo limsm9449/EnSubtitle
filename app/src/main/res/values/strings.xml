@@ -50,4 +50,5 @@
     <string name="title_activity_conversation_study">ConversationStudyActivity</string>
     <string name="title_activity_study6">Study6Activity</string>
     <string name="title_activity_drama">DramaActivity</string>
+    <string name="title_activity_drama2">Drama2Activity</string>
 </resources>

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:paddingLeft="10dp"
-    android:paddingTop="8dp"
+    android:paddingLeft="5dp"
+    android:paddingTop="5dp"
     android:paddingRight="5dp"
-    android:paddingBottom="8dp"
+    android:paddingBottom="5dp"
     android:descendantFocusability="blocksDescendants"
     android:background="#ffffff">
 
@@ -12,7 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="false"
-        android:layout_toLeftOf="@+id/my_f_cp_ib_next">
+        android:layout_toLeftOf="@+id/my_f_cp_ib_next"
+        android:layout_centerVertical="true">
 
         <TextView
             android:layout_width="wrap_content"
@@ -22,11 +23,12 @@
             android:layout_alignParentTop="false"
             android:layout_alignParentLeft="true"
             android:textColor="@color/my_text_word"
-            android:textSize="15dp"
-            android:textStyle="normal|bold" />
+            android:textSize="13sp"
+            android:textStyle="normal|bold"
+            android:layout_toLeftOf="@+id/my_tv_smi" />
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="SMI"
             android:id="@+id/my_tv_smi"
@@ -38,26 +40,26 @@
             android:layout_alignParentLeft="false"
             android:layout_alignWithParentIfMissing="false"
             android:layout_alignParentTop="false"
-            android:gravity="center_vertical|left"
-            android:layout_below="@+id/my_tv_drama"
-            android:layout_marginTop="3dp" />
+            android:layout_toLeftOf="@+id/my_tv_mp3"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp" />
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="MP3"
             android:id="@+id/my_tv_mp3"
             android:layout_alignParentBottom="false"
-            android:layout_alignParentRight="false"
             android:layout_alignParentEnd="false"
             android:textColor="@color/my_text_mean"
             android:textSize="13dp"
             android:layout_alignParentLeft="false"
             android:layout_alignWithParentIfMissing="false"
             android:layout_alignParentTop="false"
-            android:gravity="center_vertical|left"
-            android:layout_below="@+id/my_tv_smi"
-            android:layout_marginTop="3dp" />
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="5dp" />
 
     </RelativeLayout>
 

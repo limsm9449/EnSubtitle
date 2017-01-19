@@ -61,7 +61,9 @@ public class FileChooser {
         });
         dialog.setContentView(list);
         dialog.getWindow().setLayout(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
+    }
 
+    public void showDialog() {
         // App 디렉토리 생성
         File appDir = new File(Environment.getExternalStorageDirectory().getAbsoluteFile() + CommConstants.folderName);
         if ( !appDir.exists() ) {
@@ -69,9 +71,7 @@ public class FileChooser {
         }
 
         refresh(appDir);
-    }
 
-    public void showDialog() {
         dialog.show();
     }
 

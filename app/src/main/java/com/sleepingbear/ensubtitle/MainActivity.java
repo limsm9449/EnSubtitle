@@ -135,6 +135,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     alertDialog.setCanceledOnTouchOutside(false);
                     alertDialog.show();
                 } else if ( selectedTab == CommConstants.f_Drama ) {
+                    if ( "".equals(((DramaFragment) adapter.getItem(selectedTab)).getGroupCode()) ) {
+                        Toast.makeText(getApplicationContext(), "드라마 카테고리를 선택하세요.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
                     LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
                     final View dialog_layout = inflater.inflate(R.layout.dialog_drama_add, null);
 
@@ -155,7 +160,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             filechooser.setFileListener(new FileChooser.FileSelectedListener() {
                                 @Override
                                 public void fileSelected(final File file) {
-                                    ((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).setText(file.getAbsolutePath());
+                                    String filePath = file.getAbsolutePath();
+                                    ((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).setText(filePath);
+                                    et_drama_name.setText(filePath.substring(filePath.lastIndexOf("/") + 1, filePath.length() - 4));
                                 }
                             });
                             filechooser.setExtension("smi,srt");
@@ -169,7 +176,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             filechooser.setFileListener(new FileChooser.FileSelectedListener() {
                                 @Override
                                 public void fileSelected(final File file) {
-                                    ((TextView) dialog_layout.findViewById(R.id.my_d_tv_mp3_file)).setText(file.getAbsolutePath());
+                                    String filePath = file.getAbsolutePath();
+                                    ((TextView) dialog_layout.findViewById(R.id.my_d_tv_mp3_file)).setText(filePath);
+                                    et_drama_name.setText(filePath.substring(filePath.lastIndexOf("/") + 1, filePath.length() - 4));
                                 }
                             });
                             filechooser.setExtension("mp3");

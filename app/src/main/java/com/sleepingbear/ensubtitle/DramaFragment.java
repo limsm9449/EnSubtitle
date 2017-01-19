@@ -53,6 +53,8 @@ public class DramaFragment extends Fragment implements View.OnClickListener {
 
         changeDramaCategory();
 
+        ((ImageView) mainView.findViewById(R.id.my_iv_group_setting)).setOnClickListener(this);
+
         //리스트 내용 변경
         changeListView();
 
@@ -64,7 +66,7 @@ public class DramaFragment extends Fragment implements View.OnClickListener {
     }
 
     public void changeDramaCategory() {
-        Cursor cursor = db.rawQuery(DicQuery.getDramaList(), null);
+        Cursor cursor = db.rawQuery(DicQuery.getDramaGroupAllList(), null);
         String[] from = new String[]{"CODE_NAME"};
         int[] to = new int[]{android.R.id.text1};
         SimpleCursorAdapter mAdapter = new SimpleCursorAdapter(getContext(), android.R.layout.simple_spinner_item, cursor, from, to);
@@ -115,10 +117,25 @@ public class DramaFragment extends Fragment implements View.OnClickListener {
             bundle.putString("SMI_FILE", cur.getString(cur.getColumnIndexOrThrow("SMI_FILE")));
             bundle.putString("MP3_FILE", cur.getString(cur.getColumnIndexOrThrow("MP3_FILE")));
 
-            Intent intent = new Intent(getActivity().getApplication(), DramaActivity.class);
-            intent.putExtras(bundle);
+            String smi = cur.getString(cur.getColumnIndexOrThrow("SMI_FILE"));
+            String mp3 = cur.getString(cur.getColumnIndexOrThrow("MP3_FILE"));
 
-            startActivity(intent);
+            if ( !"".equals(smi) && "".equals(mp3) ) {
+                //자막만 있을 때
+                Intent intent = new Intent(getActivity().getApplication(), DramaActivity.class);
+                intent.putExtras(bundle);
+                startActivity(intent);
+            } else if ( !"".equals(smi) && !"".equals(mp3) ) {
+                //자막 MP3가 있을 때
+                Intent intent = new Intent(getActivity().getApplication(), Drama2Activity.class);
+                intent.putExtras(bundle);
+                startActivity(intent);
+            } else if ( "".equals(smi) && !"".equals(mp3) ) {
+                //MP3만 있을 때..
+                Intent intent = new Intent(getActivity().getApplication(), DramaActivity.class);
+                intent.putExtras(bundle);
+                startActivity(intent);
+            }
         }
     };
 
@@ -251,12 +268,101 @@ public class DramaFragment extends Fragment implements View.OnClickListener {
     };
 
     public String getGroupCode() {
+        DicUtils.dicLog("groupCode : " + groupCode);
         return groupCode;
     }
 
     @Override
     public void onClick(View v) {
+        if ( v.getId() == R.id.my_iv_group_setting ) {
+            //layout 구성
+            final View dialog_layout = mInflater.inflate(R.layout.dialog_drama_group_iud, null);
 
+            //dialog 생성..
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setView(dialog_layout);
+            final AlertDialog alertDialog = builder.create();
+
+            final EditText et_ins_category_name = ((EditText) dialog_layout.findViewById(R.id.my_et_ins_category_name));
+            ((Button) dialog_layout.findViewById(R.id.my_b_ins)).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if ("".equals(et_ins_category_name.getText().toString())) {
+                        Toast.makeText(getContext(), "카테고리명을 입력하세요.", Toast.LENGTH_SHORT).show();
+                    }
+
+                    db.execSQL(DicQuery.getInsDramaCode("DRAMA", DicQuery.getMaxDramaGroupCode(db), et_ins_category_name.getText().toString(), "", "" ) );
+
+                    changeDramaCategory();
+
+                    alertDialog.dismiss();
+
+                    Toast.makeText(getContext(), "카테고리를 추가 하였습니다.", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            final EditText et_category_name = ((EditText) dialog_layout.findViewById(R.id.my_et_category_name));
+            et_category_name.setText(((Cursor) s_group.getSelectedItem()).getString(2));
+            ((Button) dialog_layout.findViewById(R.id.my_b_upd)).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if ("".equals(et_category_name.getText().toString())) {
+                        Toast.makeText(getContext(), "카테고리명을 입력하세요.", Toast.LENGTH_SHORT).show();
+                    }
+
+                    db.execSQL(DicQuery.getUpdDramaCode("DRAMA", ((Cursor) s_group.getSelectedItem()).getString(1), et_category_name.getText().toString(), "", "" ) );
+
+                    changeDramaCategory();
+
+                    alertDialog.dismiss();
+
+                    Toast.makeText(getContext(), "카테고리를 수정 하였습니다.", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            ((Button) dialog_layout.findViewById(R.id.my_b_del)).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    new AlertDialog.Builder(getActivity())
+                            .setTitle("알림")
+                            .setMessage("삭제된 데이타는 복구할 수 없습니다. 삭제하시겠습니까?")
+                            .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if ( ((Cursor) s_group.getSelectedItem()).getInt(3) > 0 ) {
+                                        Toast.makeText(getContext(), "드라마가 등록된 카테고리는 삭제할 수 없습니다.", Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        alertDialog.dismiss();
+
+                                        db.execSQL(DicQuery.getDelCode("DRAMA", ((Cursor) s_group.getSelectedItem()).getString(1)));
+
+                                        changeDramaCategory();
+
+                                        Toast.makeText(getContext(), "드라마를 삭제 하였습니다.", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            })
+                            .setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                }
+                            })
+                            .show();
+                }
+            });
+
+            ((Button) dialog_layout.findViewById(R.id.my_b_close)).setOnClickListener(
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            alertDialog.dismiss();
+                        }
+                    }
+            );
+
+            alertDialog.setCanceledOnTouchOutside(false);
+            alertDialog.show();
+        }
     }
 
 }
@@ -275,11 +381,15 @@ class DramaFragCursorAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ((TextView) view.findViewById(R.id.my_tv_drama)).setText(String.valueOf(cursor.getString(cursor.getColumnIndexOrThrow("CODE_NAME"))));
-        ((TextView) view.findViewById(R.id.my_tv_smi)).setText(String.valueOf(cursor.getString(cursor.getColumnIndexOrThrow("SMI_FILE"))));
-        if ( "".equals(String.valueOf(cursor.getString(cursor.getColumnIndexOrThrow("MP3_FILE")))) ) {
-            ((TextView) view.findViewById(R.id.my_tv_mp3)).setVisibility(View.GONE);
+        if ( "".equals(String.valueOf(cursor.getString(cursor.getColumnIndexOrThrow("SMI_FILE")))) ) {
+            ((TextView) view.findViewById(R.id.my_tv_smi)).setText("");
         } else {
-            ((TextView) view.findViewById(R.id.my_tv_mp3)).setText(String.valueOf(cursor.getString(cursor.getColumnIndexOrThrow("MP3_FILE"))));
+            ((TextView) view.findViewById(R.id.my_tv_smi)).setText("SMI");
+        }
+        if ( "".equals(String.valueOf(cursor.getString(cursor.getColumnIndexOrThrow("MP3_FILE")))) ) {
+            ((TextView) view.findViewById(R.id.my_tv_mp3)).setText("");
+        } else {
+            ((TextView) view.findViewById(R.id.my_tv_mp3)).setText("MP3");
         }
     }
 
