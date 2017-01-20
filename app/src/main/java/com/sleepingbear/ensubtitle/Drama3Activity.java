@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -23,16 +24,25 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.CheckBox;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RadioButton;
-import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.exoplayer.ExoPlaybackException;
+import com.google.android.exoplayer.ExoPlayer;
+import com.google.android.exoplayer.MediaCodecAudioTrackRenderer;
+import com.google.android.exoplayer.extractor.ExtractorSampleSource;
+import com.google.android.exoplayer.extractor.mp3.Mp3Extractor;
+import com.google.android.exoplayer.extractor.webm.WebmExtractor;
+import com.google.android.exoplayer.upstream.Allocator;
+import com.google.android.exoplayer.upstream.DataSource;
+import com.google.android.exoplayer.upstream.DefaultAllocator;
+import com.google.android.exoplayer.upstream.DefaultUriDataSource;
+import com.google.android.exoplayer.util.PlayerControl;
+import com.google.android.exoplayer.util.Util;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 
@@ -40,12 +50,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class Drama2Activity extends AppCompatActivity implements View.OnClickListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener,
-                MediaPlayer.OnSeekCompleteListener {
+public class Drama3Activity extends AppCompatActivity implements View.OnClickListener  {
 
     private DbHelper dbHelper;
     private SQLiteDatabase db;
-    private Drama2CursorAdapter adapter;
+    private Drama3CursorAdapter adapter;
     private ListView listView;
     private SeekBar seekBar;
 
@@ -54,15 +63,24 @@ public class Drama2Activity extends AppCompatActivity implements View.OnClickLis
     public ArrayList<Integer> timeAl = new ArrayList<Integer>();
     private Thread mThread;
 
-    MediaPlayer mp3Player;
+    //MediaPlayer mp3Player;
     private boolean isSubtitleSync = true;
     private boolean isRepeat = false;
     private String repeatFlag = "N";
 
+    private ExoPlayer mExoPlayer;
+    private int RENDERER_COUNT = 300000;
+    private int minBufferMs =    250000;
+    private static final int BUFFER_SEGMENT_SIZE = 64 * 1024;
+    private static final int BUFFER_SEGMENT_COUNT = 256;
+    private MediaCodecAudioTrackRenderer audioRenderer;
+    private int oldTime = -1;
+    private int seekToTime = -1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_drama2);
+        setContentView(R.layout.activity_drama3);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -97,9 +115,9 @@ public class Drama2Activity extends AppCompatActivity implements View.OnClickLis
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                DicUtils.dicLog("onProgressChanged : " + progress + " : " + (progress / 60) + " : " + (progress - (progress / 60) * 60));
-
                 if ( fromUser ) {
+                    DicUtils.dicLog("onProgressChanged : " + progress + " : " + (progress / 60) + " : " + (progress - (progress / 60) * 60));
+
                     int minute = progress / 60;
                     int sec = progress - minute * 60;
                     ((TextView) findViewById(R.id.my_c_tv_time)).setText((minute < 10 ? "0" : "") + minute + ":" + (sec < 10 ? "0" : "") + sec);
@@ -113,8 +131,8 @@ public class Drama2Activity extends AppCompatActivity implements View.OnClickLis
                         listView.setSelection(pos);
                     }
 
-                    if ( mp3Player != null ) {
-                        mp3Player.seekTo(progress * 1000);
+                    if ( mExoPlayer != null ) {
+                        mExoPlayer.seekTo(progress * 1000);
                     }
                 }
             }
@@ -147,7 +165,7 @@ public class Drama2Activity extends AppCompatActivity implements View.OnClickLis
         cursor.moveToFirst();
 
         listView = (ListView) this.findViewById(R.id.my_c_lv);
-        adapter = new Drama2CursorAdapter(getApplicationContext(), cursor, this);
+        adapter = new Drama3CursorAdapter(getApplicationContext(), cursor, this);
         listView.setAdapter(adapter);
         listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -158,7 +176,32 @@ public class Drama2Activity extends AppCompatActivity implements View.OnClickLis
                 //player 시간
                 int time = timeAl.get(cur.getPosition());
                 seekBar.setProgress(time);
-                mp3Player.seekTo(time * 100);
+
+                DicUtils.dicLog("시간비교 : " + oldTime + " : " + time);
+                if ( oldTime < time ) {
+                    mExoPlayer.seekTo(time * 100);
+                } else {
+                    /*
+                    mExoPlayer.stop();
+                    Allocator allocator = new DefaultAllocator(minBufferMs);
+                    DataSource dataSource = new DefaultUriDataSource(getApplicationContext(), null, Util.getUserAgent(Drama3Activity.this, "ExoPlayerExtWebMDemo"));
+                    Mp3Extractor extractor = new Mp3Extractor();
+                    ExtractorSampleSource sampleSource = new ExtractorSampleSource(
+                            Uri.fromFile(new File(mp3File)), dataSource, extractor, allocator, BUFFER_SEGMENT_COUNT * BUFFER_SEGMENT_SIZE);
+                    audioRenderer = new MediaCodecAudioTrackRenderer(sampleSource);
+                    mExoPlayer.prepare(audioRenderer);
+                    mExoPlayer.setPlayWhenReady(true);
+                    seekToTime = time;
+                    */
+                    mExoPlayer.setPlayWhenReady(false);
+                    mExoPlayer.seekTo(0);
+                    mExoPlayer.setPlayWhenReady(true);
+                    //mExoPlayer.seekTo(time * 100);
+                    seekToTime = time;
+
+                    DicUtils.dicLog("이전으로 이동");
+                }
+                oldTime = time;
 
                 //진행바 시간
                 time = time / 10;
@@ -194,28 +237,57 @@ public class Drama2Activity extends AppCompatActivity implements View.OnClickLis
         listView.setSelection(0);
 
         try {
-            File file = new File(mp3File);
-            if ( file.exists() ) {
-                ((RadioButton) findViewById(R.id.my_rb_foreign)).setChecked(true);
+            mExoPlayer = ExoPlayer.Factory.newInstance(1);
+            Allocator allocator = new DefaultAllocator(minBufferMs);
+            DataSource dataSource = new DefaultUriDataSource(getApplicationContext(), null, Util.getUserAgent(this, "ExoPlayerExtWebMDemo"));
+            Mp3Extractor extractor = new Mp3Extractor();
+            ExtractorSampleSource sampleSource = new ExtractorSampleSource(
+                    Uri.fromFile(new File(mp3File)), dataSource, extractor, allocator, BUFFER_SEGMENT_COUNT * BUFFER_SEGMENT_SIZE);
+            audioRenderer = new MediaCodecAudioTrackRenderer(sampleSource);
+            mExoPlayer.prepare(audioRenderer);
+            mExoPlayer.setPlayWhenReady(true);
 
-                mp3Player = new MediaPlayer();
-                mp3Player.setOnPreparedListener(this);
-                mp3Player.setOnCompletionListener(this);
-                mp3Player.setDataSource(mp3File);
-                mp3Player.setLooping(false);
-                mp3Player.prepareAsync();
+            ((ImageView) findViewById(R.id.my_iv_play)).setVisibility(View.GONE);
+            ((ImageView) findViewById(R.id.my_iv_sync)).setVisibility(View.GONE);
 
-                ((ImageView) findViewById(R.id.my_iv_play)).setEnabled(false);
-                ((ImageView) findViewById(R.id.my_iv_pause)).setVisibility(View.GONE);
-                ((ImageView) findViewById(R.id.my_iv_stop)).setVisibility(View.GONE);
-                ((ImageView) findViewById(R.id.my_iv_sync)).setVisibility(View.GONE);
+            mp3PlayerThread();
 
-                adapter.setMp3Play(true);
-            } else {
-                adapter.setMp3Play(false);
+            mExoPlayer.addListener(new ExoPlayer.Listener() {
+                @Override
+                public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+                    DicUtils.dicLog("onPlayerStateChanged : " + playbackState);
+                    if (playbackState == ExoPlayer.STATE_READY) {
 
-                Toast.makeText(getApplicationContext(), "MP3 파일이 존재하지 않습니다.", Toast.LENGTH_SHORT).show();
-            }
+                        if ( seekToTime > -1 ) {
+                            mExoPlayer.seekTo(seekToTime * 100);
+                            seekToTime = -1;
+                        }
+
+                        //mp3PlayerThread();
+
+                        adapter.setMp3Play(true);
+
+                        int time = new Long(mExoPlayer.getDuration()).intValue() / 1000;
+                        int minute = time / 60;
+                        int sec = time - minute * 60;
+                        ((TextView) findViewById(R.id.my_c_tv_full_time)).setText((minute < 10 ? "0" : "") + minute + ":" + (sec < 10 ? "0" : "") + sec);
+
+                        seekBar.setMax(time);
+                    }
+                }
+
+                @Override
+                public void onPlayWhenReadyCommitted() {
+                    DicUtils.dicLog("onPlayWhenReadyCommitted" );
+
+                }
+
+                @Override
+                public void onPlayerError(ExoPlaybackException error) {
+                    DicUtils.dicLog("onPlayerError" );
+
+                }
+            });
         } catch ( Exception e ) {
             Toast.makeText(getApplicationContext(), "MP3 파일 재생시 오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
         }
@@ -262,11 +334,13 @@ public class Drama2Activity extends AppCompatActivity implements View.OnClickLis
         } else if ( v.getId() == R.id.my_rb_foreign ) {
             adapter.setLang("F");
         } else if ( v.getId() == R.id.my_iv_play ) {
-            mp3Player.start();
+            //mp3Player.start();
 
             ((ImageView) findViewById(R.id.my_iv_play)).setVisibility(View.GONE);
             ((ImageView) findViewById(R.id.my_iv_pause)).setVisibility(View.VISIBLE);
             ((ImageView) findViewById(R.id.my_iv_stop)).setVisibility(View.VISIBLE);
+
+            mExoPlayer.setPlayWhenReady(true);
 
             mp3PlayerThread();
         } else if ( v.getId() == R.id.my_iv_pause ) {
@@ -274,23 +348,19 @@ public class Drama2Activity extends AppCompatActivity implements View.OnClickLis
             ((ImageView) findViewById(R.id.my_iv_pause)).setVisibility(View.GONE);
             ((ImageView) findViewById(R.id.my_iv_stop)).setVisibility(View.GONE);
 
-            mp3Player.pause();
+            mExoPlayer.setPlayWhenReady(false);
         } else if ( v.getId() == R.id.my_iv_stop ) {
             ((ImageView) findViewById(R.id.my_iv_play)).setVisibility(View.VISIBLE);
             ((ImageView) findViewById(R.id.my_iv_pause)).setVisibility(View.GONE);
             ((ImageView) findViewById(R.id.my_iv_stop)).setVisibility(View.GONE);
 
-            mp3Player.stop();
+            mExoPlayer.seekTo(0);
+            mExoPlayer.setPlayWhenReady(false);
 
-            try {
-                mp3Player.prepare();
-            } catch (IllegalStateException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            mp3Player.seekTo(0);
+            mThread.interrupt();
 
+            adapter.setMp3TimePosition(0);
+            listView.setSelection(0);
             seekBar.setProgress(0);
         } else if ( v.getId() == R.id.my_iv_sync ) {
             isSubtitleSync = true;
@@ -309,11 +379,11 @@ public class Drama2Activity extends AppCompatActivity implements View.OnClickLis
     protected void onDestroy() {
         super.onDestroy();
 
-        if ( mp3Player != null ) {
-            if (mp3Player.isPlaying()) {
-                mp3Player.stop();
+        if ( mExoPlayer != null ) {
+            if (mExoPlayer.isPlayWhenReadyCommitted()) {
+                mExoPlayer.stop();
             }
-            mp3Player.release();
+            mExoPlayer.release();
         }
 
         if ( mThread != null ) {
@@ -324,32 +394,10 @@ public class Drama2Activity extends AppCompatActivity implements View.OnClickLis
         }
     }
 
-    @Override
-    public void onCompletion(MediaPlayer mp) {
-        ((ImageView) findViewById(R.id.my_iv_play)).setVisibility(View.VISIBLE);
-        ((ImageView) findViewById(R.id.my_iv_pause)).setVisibility(View.GONE);
-        ((ImageView) findViewById(R.id.my_iv_stop)).setVisibility(View.GONE);
-    }
-
-    @Override
-    public void onPrepared(MediaPlayer mp) {
-        ((ImageView) findViewById(R.id.my_iv_play)).setEnabled(true);
-
-        //DicUtils.dicLog("mp3Player.getDuration() : " + mp3Player.getDuration());
-        seekBar.setMax(mp3Player.getDuration() / 1000);
-
-        //Toast.makeText(getApplicationContext(), "MP3 가 준비되었습니다. Play 버튼을 눌러주세요.", Toast.LENGTH_SHORT).show();
-    }
-
-    public void onSeekComplete(MediaPlayer mp) {
-        DicUtils.dicLog("onSeekComplete ");
-        mp3Player.start();
-    }
-
     public int getPositionForTime() {
         for ( int i = 0; i < timeAl.size(); i++ ) {
             if ( timeAl.get(i) >= seekBar.getProgress() * 10 ) {
-            //if ( timeAl.get(i) >= mp3Player.getCurrentPosition() * 100 ) {
+                //if ( timeAl.get(i) >= mp3Player.getCurrentPosition() * 100 ) {
                 //DicUtils.dicLog(" getPositionForTime : " + i + " : " + getTimeStr(timeAl.get(i) / 10));
                 return ( i > 0 ? i - 1 : 0 );
             }
@@ -362,7 +410,7 @@ public class Drama2Activity extends AppCompatActivity implements View.OnClickLis
         mThread = new Thread(new Runnable() {
             public void run() {
                 try {
-                    while ( mp3Player.isPlaying() ) {
+                    while ( true ) {
                         Thread.sleep(100);
 
                         Message msg = handler.obtainMessage();
@@ -382,22 +430,22 @@ public class Drama2Activity extends AppCompatActivity implements View.OnClickLis
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
 
+            oldTime = new Long(mExoPlayer.getCurrentPosition() / 100).intValue();
+
             //DicUtils.dicLog("mp3Player.getCurrentPosition() : " + mp3Player.getCurrentPosition() + getTimeStr(mp3Player.getCurrentPosition() / 1000));
-            if ( mp3Player != null ) {
-                seekBar.setProgress(mp3Player.getCurrentPosition() / 1000);
+            seekBar.setProgress(new Long(mExoPlayer.getCurrentPosition() / 1000).intValue());
 
-                int minute = (mp3Player.getCurrentPosition() / 1000) / 60;
-                int sec = (mp3Player.getCurrentPosition() / 1000) - minute * 60;
-                int sec2 = (mp3Player.getCurrentPosition() - (minute * 60 + sec) * 1000) / 100;
-                ((TextView) findViewById(R.id.my_c_tv_time)).setText((minute < 10 ? "0" : "") + minute + ":" + (sec < 10 ? "0" : "") + sec + "." + sec2);
+            int minute = new Long((mExoPlayer.getCurrentPosition() / 1000) / 60).intValue();
+            int sec = new Long((mExoPlayer.getCurrentPosition() / 1000) - minute * 60).intValue();
+            int sec2 = new Long((mExoPlayer.getCurrentPosition() - (minute * 60 + sec) * 1000) / 100).intValue();
+            ((TextView) findViewById(R.id.my_c_tv_time)).setText((minute < 10 ? "0" : "") + minute + ":" + (sec < 10 ? "0" : "") + sec);
 
-                //자막 시간을 구한다.
-                int pos = getPositionForTime();
-                adapter.setMp3TimePosition(pos);
-                if (isSubtitleSync) {
-                    if (pos > 3) {
-                        listView.setSelection(pos - 3);
-                    }
+            //자막 시간을 구한다.
+            int pos = getPositionForTime();
+            adapter.setMp3TimePosition(pos);
+            if (isSubtitleSync) {
+                if (pos > 3) {
+                    listView.setSelection(pos - 3);
                 }
             }
         }
@@ -407,10 +455,10 @@ public class Drama2Activity extends AppCompatActivity implements View.OnClickLis
         if ( isSubtitleSync ) {
             if (pos < 0) {
                 seekBar.setProgress(timeAl.get(0) / 10);
-                mp3Player.seekTo(timeAl.get(0) * 100);
+                mExoPlayer.seekTo(timeAl.get(0) * 100);
             } else {
                 seekBar.setProgress(timeAl.get(pos) / 10);
-                mp3Player.seekTo(timeAl.get(pos) * 100);
+                mExoPlayer.seekTo(timeAl.get(pos) * 100);
             }
         }
     }
@@ -422,7 +470,7 @@ public class Drama2Activity extends AppCompatActivity implements View.OnClickLis
     }
 }
 
-class Drama2CursorAdapter extends CursorAdapter {
+class Drama3CursorAdapter extends CursorAdapter {
     private String lang = "F";
     private int repeatStart = -1;
     private int repeatEnd = -1;
@@ -430,7 +478,7 @@ class Drama2CursorAdapter extends CursorAdapter {
     private Activity activity;
     private boolean isMp3Play = false;
 
-    public Drama2CursorAdapter(Context context, Cursor cursor, Activity activity) {
+    public Drama3CursorAdapter(Context context, Cursor cursor, Activity activity) {
         super(context, cursor, 0);
 
         this.activity = activity;

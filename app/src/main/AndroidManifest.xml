@@ -119,6 +119,10 @@
             android:name=".Drama2Activity"
             android:label="@string/title_activity_drama2"
             android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".Drama3Activity"
+            android:label="@string/title_activity_drama3"
             android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 

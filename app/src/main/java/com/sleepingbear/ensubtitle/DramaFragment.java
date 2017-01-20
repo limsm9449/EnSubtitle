@@ -127,9 +127,15 @@ public class DramaFragment extends Fragment implements View.OnClickListener {
                 startActivity(intent);
             } else if ( !"".equals(smi) && !"".equals(mp3) ) {
                 //자막 MP3가 있을 때
-                Intent intent = new Intent(getActivity().getApplication(), Drama2Activity.class);
-                intent.putExtras(bundle);
-                startActivity(intent);
+                if ( cur.getPosition() == 0 ) {
+                    Intent intent = new Intent(getActivity().getApplication(), Drama2Activity.class);
+                    intent.putExtras(bundle);
+                    startActivity(intent);
+                } else {
+                    Intent intent = new Intent(getActivity().getApplication(), Drama3Activity.class);
+                    intent.putExtras(bundle);
+                    startActivity(intent);
+                }
             } else if ( "".equals(smi) && !"".equals(mp3) ) {
                 //MP3만 있을 때..
                 Intent intent = new Intent(getActivity().getApplication(), DramaActivity.class);
