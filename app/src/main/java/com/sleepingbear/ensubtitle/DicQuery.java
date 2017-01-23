@@ -684,8 +684,8 @@ public class DicQuery {
     public static String getDramaSubList(String drama) {
         StringBuffer sql = new StringBuffer();
 
-        sql.append("SELECT SEQ _id, SEQ, CODE, CODE_NAME, SMI_FILE, MP3_FILE" + CommConstants.sqlCR);
-        sql.append("  FROM DIC_CODE" + CommConstants.sqlCR);
+        sql.append("SELECT SEQ _id, SEQ, CODE, CODE_NAME, SMI_FILE, MP3_FILE, ( SELECT CODE_GROUP FROM DIC_CODE WHERE CODE = A.CODE ) CODE_GROUP" + CommConstants.sqlCR);
+        sql.append("  FROM DIC_CODE A" + CommConstants.sqlCR);
         if ( "".equals(drama) ) {
             sql.append(" WHERE CODE_GROUP IN ( SELECT CODE FROM DIC_CODE WHERE CODE_GROUP = 'DRAMA' ) " + CommConstants.sqlCR);
         } else {

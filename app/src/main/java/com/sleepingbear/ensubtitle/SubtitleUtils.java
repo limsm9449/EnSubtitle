@@ -1,13 +1,16 @@
 package com.sleepingbear.ensubtitle;
 
 
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -22,7 +25,7 @@ public class SubtitleUtils {
     private static HashMap<String, HashMap> subtitleHm = new HashMap<String, HashMap>();
     private static ArrayList<Integer> timeAl = new ArrayList<Integer>();
 
-    public static void subtitleExtract(SQLiteDatabase db, String code, String fileName, boolean pIsKor) {
+    public static boolean subtitleExtract(Context context, SQLiteDatabase db, String code, String fileName, boolean pIsKor) {
         // 초기화
         subtitleHm.clear();
         timeAl.clear();;
@@ -34,6 +37,9 @@ public class SubtitleUtils {
                     readSmiFile(fileName.substring(0, fileName.length() - 4) + "_en.smi", false);
                 } else if ( existFile(fileName.substring(0, fileName.length() - 4) + "_en.srt") ) {
                     readSrtFile(fileName.substring(0, fileName.length() - 4) + "_en.srt", false);
+                } else {
+                    Toast.makeText(context, "영문이 없는 자막입니다.", Toast.LENGTH_SHORT).show();
+                    return false;
                 }
             }
         } else {
@@ -43,6 +49,9 @@ public class SubtitleUtils {
                 readSmiFile(fileName.substring(0, fileName.length() - 4) + "_en.smi", false);
             } else if ( existFile(fileName.substring(0, fileName.length() - 4) + "_en.srt") ) {
                 readSrtFile(fileName.substring(0, fileName.length() - 4) + "_en.srt", false);
+            } else {
+                Toast.makeText(context, "영문이 없는 자막입니다.", Toast.LENGTH_SHORT).show();
+                return false;
             }
         }
 
@@ -52,18 +61,20 @@ public class SubtitleUtils {
             }
         });
 
+        DicUtils.dicLog("timeAl.size() : " + timeAl.size());
         db.execSQL(DicQuery.getDelSubtitle(code));
         for ( int i = 0; i < timeAl.size(); i++ ) {
-            //System.out.println(timeAl.get(i) + " : " + subtitleHm.get(Integer.toString(timeAl.get(i))));
             String han = DicUtils.getString((String)subtitleHm.get(Integer.toString(timeAl.get(i))).get("HAN") );
             String foreign = DicUtils.getString((String)subtitleHm.get(Integer.toString(timeAl.get(i))).get("FOREIGN") );
-
+            //DicUtils.dicLog(han + " : " + foreign);
             if ( !"".equals(han) && !"".equals(foreign) ) {
                 db.execSQL(DicQuery.getInsSubtitle(code, Integer.toString(timeAl.get(i)),
                         (DicUtils.getString((String) subtitleHm.get(Integer.toString(timeAl.get(i))).get("HAN"))).replaceAll("'", "''"),
                         (DicUtils.getString((String) subtitleHm.get(Integer.toString(timeAl.get(i))).get("FOREIGN"))).replaceAll("'", "''")));
             }
         }
+
+        return true;
     }
 
     public static boolean existFile(String filePath) {
@@ -72,11 +83,8 @@ public class SubtitleUtils {
         return file.exists();
     }
 
-    public static boolean readSmiFile(String filePath, boolean pIsKor) {
-        System.out.println(filePath);
-        boolean isStartSync = false;
-        boolean isKor = pIsKor;
-        String oldClass = "";
+    public static boolean isSmi(String filePath) {
+        boolean isSmi = false;
 
         File f = new File(filePath);
 
@@ -89,65 +97,102 @@ public class SubtitleUtils {
             String line = null;
 
             String startTime = "";
-            while ((line = br.readLine()) != null) {
-                //System.out.println(line);
-
-                if ( isStartSync == false && line.toUpperCase().indexOf("<SYNC") < 0 ) {
-                    continue;
-                } else {
-                    isStartSync = true;
-                }
-
-                boolean isSyncLine = false;
-                if ( line.toUpperCase().indexOf("<SYNC") > -1 ) {
-                    isSyncLine = true;
-
-                    //시간 분리
-                    startTime = tagAttributeValue(line.substring(0, line.indexOf(">") + 1), "Start");
-                    //System.out.println("startTime : " + startTime);
-
-                    line = line.substring(line.indexOf(">") + 1, line.length());
-                }
-
-                String currClass = "";
-                if ( line.toUpperCase().indexOf("<P CLASS=") > -1 ) {
-                    //class 분리
-                    currClass = tagAttributeValue(line.substring(0, line.indexOf(">") + 1), "Class");
-
-                    line = line.substring(line.indexOf(">") + 1, line.length());
-
-                    if ( "".equals(oldClass) ) {
-                        oldClass = currClass;
-                    }
-                    if ( isKor == true && !currClass.equals(oldClass) ) {
-                        isKor = false;
-                        oldClass = currClass;
-                    }
-                }
-
-
-                line = line.replaceAll("&nbsp;", " ").replaceAll("[<][^>]*>", " ").replaceAll("  ", " ").trim();
-                if ( isSyncLine ) {
-                    if ( isKor == true ) {
-                        addKorSubtitle(startTime, line);
-                    } else {
-                        addForeignSubtitle(startTime, line);
-                    }
-                } else {
-                    if ( isKor == true ) {
-                        addKorSubtitle(startTime, line);
-                    } else {
-                        addForeignSubtitle(startTime, line);
-                    }
-                }
+            line = br.readLine();
+            if ( "<SAMI>".equals(line) ) {
+                isSmi = true;
             }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
+        } catch (IOException ioe) {
+            System.out.println(ioe.getMessage());
         } finally {
             try {
                 if (br!=null)
                     br.close();
             } catch (Exception e) {}
+        }
+
+        return isSmi;
+    }
+
+    public static boolean readSmiFile(String filePath, boolean pIsKor) {
+        System.out.println(filePath);
+        boolean isStartSync = false;
+        boolean isKor = pIsKor;
+        String oldClass = "";
+
+        if ( isSmi(filePath) ) {
+            File f = new File(filePath);
+
+            String[] charsetsToBeTested = {"UTF-8", "euc-kr"};
+            Charset charset = detectCharset(f, charsetsToBeTested);
+
+            BufferedReader br = null;
+            try {
+                br = new BufferedReader(new InputStreamReader(new FileInputStream(f), charset));
+                String line = null;
+
+                String startTime = "";
+                while ((line = br.readLine()) != null) {
+                    //System.out.println(line);
+
+                    if ( isStartSync == false && line.toUpperCase().indexOf("<SYNC") < 0 ) {
+                        continue;
+                    } else {
+                        isStartSync = true;
+                    }
+
+                    boolean isSyncLine = false;
+                    if ( line.toUpperCase().indexOf("<SYNC") > -1 ) {
+                        isSyncLine = true;
+
+                        //시간 분리
+                        startTime = tagAttributeValue(line.substring(0, line.indexOf(">") + 1), "Start");
+                        //System.out.println("startTime : " + startTime);
+
+                        line = line.substring(line.indexOf(">") + 1, line.length());
+                    }
+
+                    String currClass = "";
+                    if ( line.toUpperCase().indexOf("<P CLASS=") > -1 ) {
+                        //class 분리
+                        currClass = tagAttributeValue(line.substring(0, line.indexOf(">") + 1), "Class");
+
+                        line = line.substring(line.indexOf(">") + 1, line.length());
+
+                        if ( "".equals(oldClass) ) {
+                            oldClass = currClass;
+                        }
+                        if ( isKor == true && !currClass.equals(oldClass) ) {
+                            isKor = false;
+                            oldClass = currClass;
+                        }
+                    }
+
+
+                    line = line.replaceAll("&nbsp;", " ").replaceAll("[<][^>]*>", " ").replaceAll("  ", " ").trim();
+                    if ( isSyncLine ) {
+                        if ( isKor == true ) {
+                            addKorSubtitle(startTime, line);
+                        } else {
+                            addForeignSubtitle(startTime, line);
+                        }
+                    } else {
+                        if ( isKor == true ) {
+                            addKorSubtitle(startTime, line);
+                        } else {
+                            addForeignSubtitle(startTime, line);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            } finally {
+                try {
+                    if (br!=null)
+                        br.close();
+                } catch (Exception e) {}
+            }
+        } else {
+            readSrtFile(filePath, pIsKor);
         }
 
         return isKor;
@@ -217,18 +262,20 @@ public class SubtitleUtils {
 
     public static void addKorSubtitle(String time, String subtitle) {
         //System.out.println("addKorSubtitle"  + " : " + time  + " : " + subtitle);
-        String tempTime = time.substring(0, time.length() - 2);
-        if ( subtitleHm.containsKey(tempTime) ) {
-            HashMap<String, String> row = (HashMap<String, String>)subtitleHm.get(tempTime);
-            row.put("HAN", row.get("HAN") + " " + subtitle);
-        } else {
-            timeAl.add(Integer.parseInt(tempTime));
+        if ( Integer.parseInt(time) >= 100 ) {
+            String tempTime = time.substring(0, time.length() - 2);
+            if (subtitleHm.containsKey(tempTime)) {
+                HashMap<String, String> row = (HashMap<String, String>) subtitleHm.get(tempTime);
+                row.put("HAN", row.get("HAN") + " " + subtitle);
+            } else {
+                timeAl.add(Integer.parseInt(tempTime));
 
-            HashMap<String, String> row = new HashMap<String, String>();
-            row.put("HAN", subtitle);
-            row.put("FOREIGN", "");
+                HashMap<String, String> row = new HashMap<String, String>();
+                row.put("HAN", subtitle);
+                row.put("FOREIGN", "");
 
-            subtitleHm.put(tempTime, row);
+                subtitleHm.put(tempTime, row);
+            }
         }
     }
 

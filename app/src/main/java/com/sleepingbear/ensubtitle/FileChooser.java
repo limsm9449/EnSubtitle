@@ -132,7 +132,7 @@ public class FileChooser {
                     android.R.layout.simple_list_item_1, fileList) {
                 @Override public View getView(int pos, View view, ViewGroup parent) {
                     view = super.getView(pos, view, parent);
-                    ((TextView) view).setSingleLine(true);
+                    ((TextView) view).setSingleLine(false);
                     return view;
                 }
             });

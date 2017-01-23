@@ -123,6 +123,7 @@
         <activity
             android:name=".Drama3Activity"
             android:label="@string/title_activity_drama3"
+            android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 

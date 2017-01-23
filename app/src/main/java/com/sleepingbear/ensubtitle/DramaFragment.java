@@ -170,6 +170,7 @@ public class DramaFragment extends Fragment implements View.OnClickListener {
             }
             final String old_smi_file = tv_smi_file.getText().toString();
             final String code = cur.getString(cur.getColumnIndexOrThrow("CODE"));
+            final String codeGroup = cur.getString(cur.getColumnIndexOrThrow("CODE_GROUP"));
 
             ((Button) dialog_layout.findViewById(R.id.my_b_smi_find)).setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -216,11 +217,11 @@ public class DramaFragment extends Fragment implements View.OnClickListener {
 
                     alertDialog.dismiss();
 
-                    db.execSQL(DicQuery.getUpdDramaCode(groupCode, code, et_drama_name.getText().toString(), smi_file, mp3_file ) );
+                    db.execSQL(DicQuery.getUpdDramaCode(codeGroup, code, et_drama_name.getText().toString(), smi_file, mp3_file ) );
 
                     //파일을 읽어서 자막 파일을 변환한다.
                     if ( !old_smi_file.equals(tv_smi_file.getText().toString()) ) {
-                        SubtitleUtils.subtitleExtract(db, (String) v.getTag(), smi_file, true);
+                        SubtitleUtils.subtitleExtract(getContext(), db, (String) v.getTag(), smi_file, true);
                     }
 
                     changeListView();
@@ -240,7 +241,7 @@ public class DramaFragment extends Fragment implements View.OnClickListener {
                                 public void onClick(DialogInterface dialog, int which) {
                                     alertDialog.dismiss();
 
-                                    db.execSQL(DicQuery.getDelCode(groupCode, code));
+                                    db.execSQL(DicQuery.getDelCode(codeGroup, code));
                                     db.execSQL(DicQuery.getDelSubtitle(code));
 
                                     changeDramaCategory();

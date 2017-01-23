@@ -155,20 +155,30 @@ public class Drama2Activity extends AppCompatActivity implements View.OnClickLis
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Cursor cur = (Cursor) adapter.getItem(i);
 
-                //player 시간
-                int time = timeAl.get(cur.getPosition());
-                seekBar.setProgress(time);
-                mp3Player.seekTo(time * 100);
+                try {
+                    //player 시간
+                    int time = timeAl.get(cur.getPosition());
+                    seekBar.setProgress(time);
 
-                //진행바 시간
-                time = time / 10;
-                int minute = time / 60;
-                int sec = time - minute * 60;
-                ((TextView) findViewById(R.id.my_c_tv_time)).setText((minute < 10 ? "0" : "") + minute + ":" + (sec < 10 ? "0" : "") + sec);
+                    mp3Player.stop();
+                    mp3Player.setLooping(false);
+                    mp3Player.prepare();
+                    mp3Player.seekTo(time * 100);
+                    mp3Player.start();
 
-                DicUtils.dicLog("setOnItemClickListener : " + cur.getPosition() + " : " + getTimeStr(time));
+                    //진행바 시간
+                    time = time / 10;
+                    int minute = time / 60;
+                    int sec = time - minute * 60;
+                    ((TextView) findViewById(R.id.my_c_tv_time)).setText((minute < 10 ? "0" : "") + minute + ":" + (sec < 10 ? "0" : "") + sec);
 
-                adapter.setMp3TimePosition(cur.getPosition());
+                    DicUtils.dicLog("setOnItemClickListener : " + cur.getPosition() + " : " + getTimeStr(time));
+
+                    adapter.setMp3TimePosition(cur.getPosition());
+                } catch ( Exception e ) {
+                    e.printStackTrace();
+                }
+
             }
         });
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {

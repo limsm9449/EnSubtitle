@@ -136,99 +136,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     alertDialog.show();
                 } else if ( selectedTab == CommConstants.f_Drama ) {
                     if ( "".equals(((DramaFragment) adapter.getItem(selectedTab)).getGroupCode()) ) {
-                        Toast.makeText(getApplicationContext(), "드라마 카테고리를 선택하세요.", Toast.LENGTH_SHORT).show();
-                        return;
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("알림")
+                                .setMessage("Default 카테고리에 추가하시겠습니까?")
+                                .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        showDramaAddDialog("D001");
+                                    }
+                                })
+                                .setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                    }
+                                })
+                                .show();
+
+                    } else {
+                        showDramaAddDialog(((DramaFragment) adapter.getItem(selectedTab)).getGroupCode());
                     }
-
-                    LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-                    final View dialog_layout = inflater.inflate(R.layout.dialog_drama_add, null);
-
-                    //dialog 생성..
-                    AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
-                    builder.setView(dialog_layout);
-                    final AlertDialog alertDialog = builder.create();
-
-                    final EditText et_drama_name = ((EditText) dialog_layout.findViewById(R.id.my_et_drama_name));
-
-                    ((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).setText(CommConstants.smi_msg);
-                    ((TextView) dialog_layout.findViewById(R.id.my_d_tv_mp3_file)).setText(CommConstants.mp3_msg);
-
-                    ((Button) dialog_layout.findViewById(R.id.my_b_smi_find)).setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            FileChooser filechooser = new FileChooser(MainActivity.this);
-                            filechooser.setFileListener(new FileChooser.FileSelectedListener() {
-                                @Override
-                                public void fileSelected(final File file) {
-                                    String filePath = file.getAbsolutePath();
-                                    ((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).setText(filePath);
-                                    et_drama_name.setText(filePath.substring(filePath.lastIndexOf("/") + 1, filePath.length() - 4));
-                                }
-                            });
-                            filechooser.setExtension("smi,srt");
-                            filechooser.showDialog();
-                        }
-                    });
-                    ((Button) dialog_layout.findViewById(R.id.my_b_mp3_find)).setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            FileChooser filechooser = new FileChooser(MainActivity.this);
-                            filechooser.setFileListener(new FileChooser.FileSelectedListener() {
-                                @Override
-                                public void fileSelected(final File file) {
-                                    String filePath = file.getAbsolutePath();
-                                    ((TextView) dialog_layout.findViewById(R.id.my_d_tv_mp3_file)).setText(filePath);
-                                    et_drama_name.setText(filePath.substring(filePath.lastIndexOf("/") + 1, filePath.length() - 4));
-                                }
-                            });
-                            filechooser.setExtension("mp3");
-                            filechooser.showDialog();
-                        }
-                    });
-                    ((Button) dialog_layout.findViewById(R.id.my_b_ins)).setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            if ("".equals(et_drama_name.getText().toString())) {
-                                Toast.makeText(getApplicationContext(), "드라마 제목을 입력하세요.", Toast.LENGTH_SHORT).show();
-                                return;
-                            }
-                            if ("".equals(((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).getText().toString())) {
-                                Toast.makeText(getApplicationContext(), "자막 파일을 선택하세요.", Toast.LENGTH_SHORT).show();
-                                return;
-                            }
-
-                            alertDialog.dismiss();
-
-                            String smi_file = ((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).getText().toString();
-                            if ( smi_file.equals(CommConstants.smi_msg) ) {
-                                smi_file = "";
-                            }
-                            String mp3_file = ((TextView) dialog_layout.findViewById(R.id.my_d_tv_mp3_file)).getText().toString();
-                            if ( mp3_file.equals(CommConstants.mp3_msg) ) {
-                                mp3_file = "";
-                            }
-
-                            String codeGroup = ((DramaFragment) adapter.getItem(selectedTab)).getGroupCode();
-                            String insMaxCode = DicQuery.getMaxDramaCode(db, codeGroup);
-                            db.execSQL(DicQuery.getInsDramaCode(codeGroup, insMaxCode, et_drama_name.getText().toString(), smi_file, mp3_file ) );
-
-                            //파일을 읽어서 자막 파일을 변환한다.
-                            SubtitleUtils.subtitleExtract( db, insMaxCode, ((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).getText().toString() , true );
-
-                            ((DramaFragment) adapter.getItem(selectedTab)).changeListView();
-
-                            Toast.makeText(getApplicationContext(), "드라마를 추가하였습니다.", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                    ((Button) dialog_layout.findViewById(R.id.my_b_close)).setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            alertDialog.dismiss();
-                        }
-                    });
-
-                    alertDialog.setCanceledOnTouchOutside(false);
-                    alertDialog.show();
                 }
             }
         });
@@ -314,6 +240,99 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 		*/
 
 		checkPermission();
+    }
+
+    public void showDramaAddDialog(String pCodeGroup) {
+        final String codeGroup = pCodeGroup;
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        final View dialog_layout = inflater.inflate(R.layout.dialog_drama_add, null);
+
+        //dialog 생성..
+        AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
+        builder.setView(dialog_layout);
+        final AlertDialog alertDialog = builder.create();
+
+        final EditText et_drama_name = ((EditText) dialog_layout.findViewById(R.id.my_et_drama_name));
+
+        ((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).setText(CommConstants.smi_msg);
+        ((TextView) dialog_layout.findViewById(R.id.my_d_tv_mp3_file)).setText(CommConstants.mp3_msg);
+
+        ((Button) dialog_layout.findViewById(R.id.my_b_smi_find)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FileChooser filechooser = new FileChooser(MainActivity.this);
+                filechooser.setFileListener(new FileChooser.FileSelectedListener() {
+                    @Override
+                    public void fileSelected(final File file) {
+                        String filePath = file.getAbsolutePath();
+                        ((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).setText(filePath);
+                        et_drama_name.setText(filePath.substring(filePath.lastIndexOf("/") + 1, filePath.length() - 4));
+                    }
+                });
+                filechooser.setExtension("smi,srt");
+                filechooser.showDialog();
+            }
+        });
+        ((Button) dialog_layout.findViewById(R.id.my_b_mp3_find)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FileChooser filechooser = new FileChooser(MainActivity.this);
+                filechooser.setFileListener(new FileChooser.FileSelectedListener() {
+                    @Override
+                    public void fileSelected(final File file) {
+                        String filePath = file.getAbsolutePath();
+                        ((TextView) dialog_layout.findViewById(R.id.my_d_tv_mp3_file)).setText(filePath);
+                        et_drama_name.setText(filePath.substring(filePath.lastIndexOf("/") + 1, filePath.length() - 4));
+                    }
+                });
+                filechooser.setExtension("mp3");
+                filechooser.showDialog();
+            }
+        });
+        ((Button) dialog_layout.findViewById(R.id.my_b_ins)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if ("".equals(et_drama_name.getText().toString())) {
+                    Toast.makeText(getApplicationContext(), "드라마 제목을 입력하세요.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if ("".equals(((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).getText().toString())) {
+                    Toast.makeText(getApplicationContext(), "자막 파일을 선택하세요.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                alertDialog.dismiss();
+
+                String smi_file = ((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).getText().toString();
+                if ( smi_file.equals(CommConstants.smi_msg) ) {
+                    smi_file = "";
+                }
+                String mp3_file = ((TextView) dialog_layout.findViewById(R.id.my_d_tv_mp3_file)).getText().toString();
+                if ( mp3_file.equals(CommConstants.mp3_msg) ) {
+                    mp3_file = "";
+                }
+
+                String insMaxCode = DicQuery.getMaxDramaCode(db, codeGroup);
+
+                //파일을 읽어서 자막 파일을 변환한다.
+                boolean isSave = SubtitleUtils.subtitleExtract( getApplicationContext(), db, insMaxCode, ((TextView) dialog_layout.findViewById(R.id.my_d_tv_smi_file)).getText().toString() , true );
+                if ( isSave ) {
+                    db.execSQL(DicQuery.getInsDramaCode(codeGroup, insMaxCode, et_drama_name.getText().toString(), smi_file, mp3_file ) );
+                    ((DramaFragment) adapter.getItem(selectedTab)).changeListView();
+
+                    Toast.makeText(getApplicationContext(), "드라마를 추가하였습니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        ((Button) dialog_layout.findViewById(R.id.my_b_close)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alertDialog.dismiss();
+            }
+        });
+
+        alertDialog.setCanceledOnTouchOutside(false);
+        alertDialog.show();
     }
 
     public boolean checkPermission() {
