@@ -285,7 +285,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         et_drama_name.setText(filePath.substring(filePath.lastIndexOf("/") + 1, filePath.length() - 4));
                     }
                 });
-                filechooser.setExtension("mp3");
+                filechooser.setExtension("mp3,mp4");
                 filechooser.showDialog();
             }
         });

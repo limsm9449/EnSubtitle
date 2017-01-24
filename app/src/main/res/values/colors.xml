@@ -17,12 +17,12 @@
     <color name="my_divider">#f17116</color>
     <color name="my_dividerL">#c1590e</color>
 
-    <color name="my_toggle_outline">#ec4a04</color>
-    <color name="my_toggle">#ec4a04</color>
-    <color name="my_toggle_dark">#742604</color>
-    <color name="my_toggle_transparent">#030303</color>
+    <color name="my_toggle_outline">#f99735</color>
+    <color name="my_toggle">#f99735</color>
+    <color name="my_toggle_dark">#99908c</color>
+    <color name="my_toggle_transparent">#99908c</color>
 
-    <color name="my_button_outline">#ec4a04</color>
+    <color name="my_button_outline">#e45112</color>
     <color name="my_button_outline_disabled">#7b6e68</color>
     <color name="my_button_dark">#742604</color>
     <color name="my_button_transparent">#ec4a04</color>

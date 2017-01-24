@@ -25,6 +25,7 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.SeekBar;
@@ -65,8 +66,6 @@ public class Drama3Activity extends AppCompatActivity implements View.OnClickLis
 
     //MediaPlayer mp3Player;
     private boolean isSubtitleSync = true;
-    private boolean isRepeat = false;
-    private String repeatFlag = "N";
 
     private ExoPlayer mExoPlayer;
     private int RENDERER_COUNT = 300000;
@@ -76,6 +75,11 @@ public class Drama3Activity extends AppCompatActivity implements View.OnClickLis
     private MediaCodecAudioTrackRenderer audioRenderer;
     private int oldTime = -1;
     private int seekToTime = -1;
+
+    private int repeatMode = 0;
+    private boolean isRepeat = false;
+    private int repeatTimeA = 0;
+    private int repeatTimeB = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,7 +113,16 @@ public class Drama3Activity extends AppCompatActivity implements View.OnClickLis
         ((ImageView) findViewById(R.id.my_iv_stop)).setOnClickListener(this);
         ((ImageView) findViewById(R.id.my_iv_sync)).setOnClickListener(this);
         ((ImageView) findViewById(R.id.my_iv_sync_not)).setOnClickListener(this);
+        ((ImageView) findViewById(R.id.my_iv_repeat)).setOnClickListener(this);
+        ((ImageView) findViewById(R.id.my_iv_start_back1)).setOnClickListener(this);
+        ((ImageView) findViewById(R.id.my_iv_start_forward1)).setOnClickListener(this);
+        ((ImageView) findViewById(R.id.my_iv_end_back1)).setOnClickListener(this);
+        ((ImageView) findViewById(R.id.my_iv_end_forward1)).setOnClickListener(this);
+        ((ImageView) findViewById(R.id.my_iv_back5)).setOnClickListener(this);
+        ((ImageView) findViewById(R.id.my_iv_forward5)).setOnClickListener(this);
+        ((TextView) findViewById(R.id.my_tv_repeat_start)).setOnClickListener(this);
 
+        ((LinearLayout) findViewById(R.id.my_c_ll_repeat)).setVisibility(View.GONE);
 
         seekBar = ((SeekBar) findViewById(R.id.my_c_seekBar));
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -175,11 +188,12 @@ public class Drama3Activity extends AppCompatActivity implements View.OnClickLis
 
                 //player 시간
                 int time = timeAl.get(cur.getPosition());
-                seekBar.setProgress(time);
 
-                DicUtils.dicLog("시간비교 : " + oldTime + " : " + time);
+                DicUtils.dicLog("시간비교 : " + getTimeStr(oldTime) + " : " + getTimeStr(time));
                 if ( oldTime < time ) {
-                    mExoPlayer.seekTo(time * 100);
+                    mExoPlayer.seekTo(time * 100 );
+                    //seekBar.setProgress(time);
+                    //oldTime = time;
                 } else {
                     /*
                     mExoPlayer.stop();
@@ -193,25 +207,27 @@ public class Drama3Activity extends AppCompatActivity implements View.OnClickLis
                     mExoPlayer.setPlayWhenReady(true);
                     seekToTime = time;
                     */
-                    mExoPlayer.setPlayWhenReady(false);
-                    mExoPlayer.seekTo(0);
-                    mExoPlayer.setPlayWhenReady(true);
+                    //mExoPlayer.setPlayWhenReady(false);
+                    //mExoPlayer.seekTo(0);
+                    //mExoPlayer.setPlayWhenReady(true);
                     //mExoPlayer.seekTo(time * 100);
-                    seekToTime = time;
+                    mExoPlayer.seekTo(time * 100);
+                    //seekBar.setProgress(time);
+                    //seekToTime = time;
 
                     DicUtils.dicLog("이전으로 이동");
                 }
                 oldTime = time;
 
                 //진행바 시간
-                time = time / 10;
-                int minute = time / 60;
-                int sec = time - minute * 60;
-                ((TextView) findViewById(R.id.my_c_tv_time)).setText((minute < 10 ? "0" : "") + minute + ":" + (sec < 10 ? "0" : "") + sec);
+                //time = time / 10;
+                //int minute = time / 60;
+                //int sec = time - minute * 60;
+                //((TextView) findViewById(R.id.my_c_tv_time)).setText((minute < 10 ? "0" : "") + minute + ":" + (sec < 10 ? "0" : "") + sec);
 
                 DicUtils.dicLog("setOnItemClickListener : " + cur.getPosition() + " : " + getTimeStr(time));
 
-                adapter.setMp3TimePosition(cur.getPosition());
+                //adapter.setMp3TimePosition(cur.getPosition());
             }
         });
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -258,10 +274,12 @@ public class Drama3Activity extends AppCompatActivity implements View.OnClickLis
                     DicUtils.dicLog("onPlayerStateChanged : " + playbackState);
                     if (playbackState == ExoPlayer.STATE_READY) {
 
+                        /*
                         if ( seekToTime > -1 ) {
                             mExoPlayer.seekTo(seekToTime * 100);
                             seekToTime = -1;
                         }
+                        */
 
                         //mp3PlayerThread();
 
@@ -270,7 +288,8 @@ public class Drama3Activity extends AppCompatActivity implements View.OnClickLis
                         int time = new Long(mExoPlayer.getDuration()).intValue() / 1000;
                         int minute = time / 60;
                         int sec = time - minute * 60;
-                        ((TextView) findViewById(R.id.my_c_tv_full_time)).setText((minute < 10 ? "0" : "") + minute + ":" + (sec < 10 ? "0" : "") + sec);
+                        int sec2 = ( time * 1000  - (minute * 60 + sec) * 1000) / 100;
+                        ((TextView) findViewById(R.id.my_c_tv_full_time)).setText((minute < 10 ? "0" : "") + minute + ":" + (sec < 10 ? "0" : "") + sec + "." + sec2);
 
                         seekBar.setMax(time);
                     }
@@ -372,7 +391,75 @@ public class Drama3Activity extends AppCompatActivity implements View.OnClickLis
 
             ((ImageView) findViewById(R.id.my_iv_sync)).setVisibility(View.VISIBLE);
             ((ImageView) findViewById(R.id.my_iv_sync_not)).setVisibility(View.GONE);
+        } else if ( v.getId() == R.id.my_iv_repeat ) {
+            isRepeat = false;
+            if ( repeatMode == 0 ) {
+                ((ImageView) findViewById(R.id.my_iv_repeat)).setImageResource(R.mipmap.repeat_a);
+                repeatTimeA = new Long(mExoPlayer.getCurrentPosition()).intValue();
+                adapter.setRepeatStart(getPositionForTime());
+                repeatMode = 1;
+                ((LinearLayout) findViewById(R.id.my_c_ll_repeat)).setVisibility(View.VISIBLE);
+                setRepeatStartTime();
+            } else if ( repeatMode == 1 ) {
+                ((ImageView) findViewById(R.id.my_iv_repeat)).setImageResource(R.mipmap.repeat_ab);
+                repeatTimeB = new Long(mExoPlayer.getCurrentPosition()).intValue();
+                adapter.setRepeatEnd(getPositionForTime());
+                isRepeat = true;
+                repeatMode = 2;
+                setRepeatEndTime();
+            } else if ( repeatMode == 2 ) {
+                ((ImageView) findViewById(R.id.my_iv_repeat)).setImageResource(R.mipmap.repeat);
+                repeatTimeA = 0;
+                repeatTimeB = 0;
+                adapter.clearRepeat();
+                repeatMode = 0;
+                ((LinearLayout) findViewById(R.id.my_c_ll_repeat)).setVisibility(View.GONE);
+            }
+        } else if ( v.getId() == R.id.my_iv_start_back1 ) {
+            if ( repeatTimeA > 1000 ) {
+                repeatTimeA -= 1000;
+                setRepeatStartTime();
+                mExoPlayer.seekTo(repeatTimeA);
+                adapter.setRepeatStart(getPositionForRepeat(repeatTimeA));
+            }
+        } else if ( v.getId() == R.id.my_iv_start_forward1 ) {
+            repeatTimeA += 1000;
+            setRepeatStartTime();
+            mExoPlayer.seekTo(repeatTimeA);
+            adapter.setRepeatStart(getPositionForRepeat(repeatTimeA));
+        } else if ( v.getId() == R.id.my_iv_end_back1 ) {
+            if ( repeatTimeB > 1000 ) {
+                repeatTimeB -= 1000;
+                setRepeatEndTime();
+                adapter.setRepeatEnd(getPositionForRepeat(repeatTimeB));
+            }
+        } else if ( v.getId() == R.id.my_iv_end_forward1 ) {
+            if ( repeatTimeB > 1000 ) {
+                repeatTimeB += 1000;
+                setRepeatEndTime();
+                adapter.setRepeatEnd(getPositionForRepeat(repeatTimeB));
+            }
+        } else if ( v.getId() == R.id.my_tv_repeat_start ) {
+            mExoPlayer.seekTo(repeatTimeA);
+        } else if ( v.getId() == R.id.my_iv_back5 ) {
+            mExoPlayer.seekTo(mExoPlayer.getCurrentPosition() - 5 * 1000);
+        } else if ( v.getId() == R.id.my_iv_forward5 ) {
+            mExoPlayer.seekTo(mExoPlayer.getCurrentPosition() + 5 * 1000);
         }
+    }
+
+    public void setRepeatStartTime() {
+        int minute = ( repeatTimeA / 1000 ) / 60;
+        int sec = ( repeatTimeA / 1000 ) - minute * 60;
+        int sec2 = (repeatTimeA  - (minute * 60 + sec) * 1000) / 100;
+        ((TextView) findViewById(R.id.my_tv_repeat_start)).setText((minute < 10 ? "0" : "") + minute + ":" + (sec < 10 ? "0" : "") + sec + "." + sec2);
+    }
+
+    public void setRepeatEndTime() {
+        int minute = ( repeatTimeB / 1000 ) / 60;
+        int sec = ( repeatTimeB / 1000 ) - minute * 60;
+        int sec2 = (repeatTimeB  - (minute * 60 + sec) * 1000) / 100;
+        ((TextView) findViewById(R.id.my_tv_repeat_end)).setText((minute < 10 ? "0" : "") + minute + ":" + (sec < 10 ? "0" : "") + sec + "." + sec2);
     }
 
     @Override
@@ -396,9 +483,27 @@ public class Drama3Activity extends AppCompatActivity implements View.OnClickLis
 
     public int getPositionForTime() {
         for ( int i = 0; i < timeAl.size(); i++ ) {
-            if ( timeAl.get(i) >= seekBar.getProgress() * 10 ) {
+            if ( timeAl.get(i) == mExoPlayer.getCurrentPosition() / 100 ) {
                 //if ( timeAl.get(i) >= mp3Player.getCurrentPosition() * 100 ) {
-                //DicUtils.dicLog(" getPositionForTime : " + i + " : " + getTimeStr(timeAl.get(i) / 10));
+                DicUtils.dicLog("a getPositionForTime : " + i + " : " + getTimeStr(timeAl.get(i)));
+                return i;
+            } else if ( timeAl.get(i) > mExoPlayer.getCurrentPosition() / 100 ) {
+                DicUtils.dicLog("b getPositionForTime : " + i + " : " + getTimeStr(timeAl.get(i)));
+                return ( i > 0 ? i - 1 : 0 );
+            }
+        }
+
+        return 0;
+    }
+
+    public int getPositionForRepeat(int time) {
+        for ( int i = 0; i < timeAl.size(); i++ ) {
+            if ( timeAl.get(i) == time / 100 ) {
+                //if ( timeAl.get(i) >= mp3Player.getCurrentPosition() * 100 ) {
+                DicUtils.dicLog("a getPositionForRepeat : " + i + " : " + getTimeStr(timeAl.get(i)));
+                return i;
+            } else if ( timeAl.get(i) > time / 100 ) {
+                DicUtils.dicLog("b getPositionForRepeat : " + i + " : " + getTimeStr(timeAl.get(i)));
                 return ( i > 0 ? i - 1 : 0 );
             }
         }
@@ -430,15 +535,22 @@ public class Drama3Activity extends AppCompatActivity implements View.OnClickLis
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
 
-            oldTime = new Long(mExoPlayer.getCurrentPosition() / 100).intValue();
+            int currentTime = new Long(mExoPlayer.getCurrentPosition()).intValue();
 
             //DicUtils.dicLog("mp3Player.getCurrentPosition() : " + mp3Player.getCurrentPosition() + getTimeStr(mp3Player.getCurrentPosition() / 1000));
-            seekBar.setProgress(new Long(mExoPlayer.getCurrentPosition() / 1000).intValue());
+            if ( isRepeat && currentTime >= repeatTimeB ) {
+                currentTime = repeatTimeA;
+                mExoPlayer.seekTo(repeatTimeA);
+            }
 
-            int minute = new Long((mExoPlayer.getCurrentPosition() / 1000) / 60).intValue();
-            int sec = new Long((mExoPlayer.getCurrentPosition() / 1000) - minute * 60).intValue();
-            int sec2 = new Long((mExoPlayer.getCurrentPosition() - (minute * 60 + sec) * 1000) / 100).intValue();
-            ((TextView) findViewById(R.id.my_c_tv_time)).setText((minute < 10 ? "0" : "") + minute + ":" + (sec < 10 ? "0" : "") + sec);
+            seekBar.setProgress(currentTime / 1000);
+
+            int minute =  ( currentTime / 1000 ) / 60;
+            int sec = ( currentTime / 1000 ) - minute * 60;
+            int sec2 = ( currentTime  - (minute * 60 + sec) * 1000) / 100;
+            ((TextView) findViewById(R.id.my_c_tv_time)).setText((minute < 10 ? "0" : "") + minute + ":" + (sec < 10 ? "0" : "") + sec + "." + sec2);
+
+            oldTime = currentTime / 100;
 
             //자막 시간을 구한다.
             int pos = getPositionForTime();
@@ -464,9 +576,11 @@ public class Drama3Activity extends AppCompatActivity implements View.OnClickLis
     }
 
     public String getTimeStr(int time) {
-        int minute = time / 60;
-        int sec = time - minute * 60;
-        return (minute < 10 ? "0" : "") + minute + " 분 " + (sec < 10 ? "0" : "") + sec + " 초";
+        int minute = (time/10) / 60;
+        int sec = (time/10) - minute * 60;
+        int sec2 = time  - (minute * 60 + sec) * 10;
+
+        return (minute < 10 ? "0" : "") + minute + " 분 " + (sec < 10 ? "0" : "") + sec + " 초 " + sec2;
     }
 }
 
@@ -511,8 +625,8 @@ class Drama3CursorAdapter extends CursorAdapter {
         //DicUtils.dicLog(tempTime + " : " + timeStr);
 
         ((TextView) view.findViewById(R.id.my_tv_time)).setText(timeStr);
-        ((TextView) view.findViewById(R.id.my_tv_han)).setText(cursor.getPosition() + " " + String.valueOf(cursor.getString(cursor.getColumnIndexOrThrow("LANG_HAN"))));
-        ((TextView) view.findViewById(R.id.my_tv_foreign)).setText(cursor.getPosition() + " " + String.valueOf(cursor.getString(cursor.getColumnIndexOrThrow("LANG_FOREIGN"))));
+        ((TextView) view.findViewById(R.id.my_tv_han)).setText(String.valueOf(cursor.getString(cursor.getColumnIndexOrThrow("LANG_HAN"))));
+        ((TextView) view.findViewById(R.id.my_tv_foreign)).setText(String.valueOf(cursor.getString(cursor.getColumnIndexOrThrow("LANG_FOREIGN"))));
 
         if ( "A".equals(lang) ) {
             ((TextView) view.findViewById(R.id.my_tv_han)).setVisibility(View.VISIBLE);
@@ -526,18 +640,20 @@ class Drama3CursorAdapter extends CursorAdapter {
         }
 
         if ( isMp3Play ) {
-            if (repeatStart <= cursor.getPosition() && cursor.getPosition() <= repeatEnd) {
-                view.setBackgroundColor(Color.rgb(249, 151, 53));
+            if (repeatStart > -1 && repeatEnd > -1 && repeatStart <= cursor.getPosition() && cursor.getPosition() <= repeatEnd) {
+                ((TextView) view.findViewById(R.id.my_tv_time)).setTextColor(Color.rgb(228, 33, 48));
+                view.setBackgroundColor(Color.rgb(255, 225, 196));
+            } else if (repeatStart > -1 && repeatEnd == -1 && repeatStart <= cursor.getPosition() && cursor.getPosition() <= mp3TimePosition) {
+                ((TextView) view.findViewById(R.id.my_tv_time)).setTextColor(Color.rgb(228, 33, 48));
+                view.setBackgroundColor(Color.rgb(255, 225, 196));
             } else {
+                ((TextView) view.findViewById(R.id.my_tv_time)).setTextColor(Color.rgb(0, 0, 0));
                 view.setBackgroundColor(Color.rgb(255, 255, 255));
             }
 
             if (cursor.getPosition() == mp3TimePosition) {
-                ((TextView) view.findViewById(R.id.my_tv_time)).setTextColor(Color.rgb(255, 255, 255));
-                view.setBackgroundColor(Color.rgb(55, 55, 55));
-            } else {
-                ((TextView) view.findViewById(R.id.my_tv_time)).setTextColor(Color.rgb(0, 0, 0));
-                view.setBackgroundColor(Color.rgb(255, 255, 255));
+                //((TextView) view.findViewById(R.id.my_tv_time)).setTextColor(Color.rgb(255, 255, 255));
+                view.setBackgroundColor(Color.rgb(255, 194, 134));
             }
         }
     }
@@ -571,7 +687,6 @@ class Drama3CursorAdapter extends CursorAdapter {
 
     public void setRepeatStart(int repeatStart) {
         this.repeatStart = repeatStart;
-        this.repeatEnd = repeatStart;
 
         notifyDataSetChanged();
     }
